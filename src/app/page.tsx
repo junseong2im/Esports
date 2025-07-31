@@ -3,50 +3,86 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_BASE = "https://esportscalender.onrender.com";
+const VALID_TEAMS = ["T1", "Gen.G", "DK", "HLE", "KT", "NS", "BRO", "DRX", "KDF", "LSB"] as const;
+type TeamName = typeof VALID_TEAMS[number];
+
 export default function Home() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [users, setUsers] = useState<{ id: string; password: string; }[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<TeamName>("T1");
   const [message, setMessage] = useState('');
-  const [isIdChecked, setIsIdChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isLogin) {
-      const user = users.find(u => u.id === username && u.password === password);
-      if (user) {
+  const handleLogin = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId: username, password })
+      });
+      
+      const text = await res.text();
+      
+      if (text.includes("로그인 성공")) {
         router.push('/schedule');
       } else {
-        setMessage('아이디 또는 비밀번호가 일치하지 않습니다.');
+        setMessage(text || '로그인에 실패했습니다.');
       }
-    } else {
-      if (!isIdChecked) {
-        setMessage('아이디 중복 확인을 해주세요.');
-        return;
-      }
-      setUsers([...users, { id: username, password }]);
-      setMessage('회원가입이 완료되었습니다.');
-      setIsLogin(true);
-      setUsername('');
-      setPassword('');
-      setIsIdChecked(false);
+    } catch (error) {
+      setMessage('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      console.error('Login error:', error);
     }
   };
 
-  const checkDuplicateId = () => {
-    if (!username) {
-      setMessage('아이디를 입력해주세요.');
+  const handleSignup = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          loginId: username,
+          password,
+          teamName: selectedTeam
+        })
+      });
+
+      const text = await res.text();
+      
+      if (res.ok) {
+        setMessage('회원가입이 완료되었습니다.');
+        setIsLogin(true);
+        setUsername('');
+        setPassword('');
+      } else {
+        setMessage(text || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      setMessage('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      console.error('Signup error:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoading || !username || !password) {
+      setMessage('아이디와 비밀번호를 모두 입력해주세요.');
       return;
     }
-    if (users.some(user => user.id === username)) {
-      setMessage('이미 사용 중인 아이디입니다.');
-      setIsIdChecked(false);
-    } else {
-      setMessage('사용 가능한 아이디입니다.');
-      setIsIdChecked(true);
+    
+    setIsLoading(true);
+    setMessage('');
+    
+    try {
+      if (isLogin) {
+        await handleLogin();
+      } else {
+        await handleSignup();
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,42 +116,21 @@ export default function Home() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setIsIdChecked(false);
-                }}
-                placeholder="아이디"
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  backgroundColor: '#333',
-                  border: '1px solid #444',
-                  borderRadius: '5px',
-                  color: 'white'
-                }}
-              />
-              {!isLogin && (
-                <button
-                  type="button"
-                  onClick={checkDuplicateId}
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#4A5568',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  중복확인
-                </button>
-              )}
-            </div>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="아이디"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: '#333',
+                border: '1px solid #444',
+                borderRadius: '5px',
+                color: 'white',
+                marginBottom: '1rem'
+              }}
+            />
             <input
               type="password"
               value={password}
@@ -127,16 +142,37 @@ export default function Home() {
                 backgroundColor: '#333',
                 border: '1px solid #444',
                 borderRadius: '5px',
-                color: 'white'
+                color: 'white',
+                marginBottom: !isLogin ? '1rem' : '0'
               }}
             />
-        </div>
+            {!isLogin && (
+              <select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value as TeamName)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: '#333',
+                  border: '1px solid #444',
+                  borderRadius: '5px',
+                  color: 'white',
+                  appearance: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {VALID_TEAMS.map((team) => (
+                  <option key={team} value={team}>{team}</option>
+                ))}
+              </select>
+            )}
+          </div>
 
           {message && (
             <p style={{ 
               textAlign: 'center', 
               marginBottom: '1rem',
-              color: message.includes('완료') || message.includes('사용 가능') ? '#4CAF50' : '#f44336',
+              color: message.includes('완료') || message.includes('성공') ? '#4CAF50' : '#f44336',
               fontSize: '0.875rem'
             }}>
               {message}
@@ -146,27 +182,29 @@ export default function Home() {
           <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button
               type="submit"
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '0.75rem',
-                backgroundColor: '#4A5568',
+                backgroundColor: isLoading ? '#2D3748' : '#4A5568',
                 color: 'white',
                 border: 'none',
                 borderRadius: '5px',
                 fontWeight: 'bold',
-                cursor: 'pointer'
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.7 : 1
               }}
             >
-              {isLogin ? '로그인' : '회원가입'}
+              {isLoading ? '처리 중...' : (isLogin ? '로그인' : '회원가입')}
             </button>
             <button
               type="button"
+              disabled={isLoading}
               onClick={() => {
                 setIsLogin(!isLogin);
                 setUsername('');
                 setPassword('');
                 setMessage('');
-                setIsIdChecked(false);
               }}
               style={{
                 width: '100%',
@@ -175,7 +213,8 @@ export default function Home() {
                 color: 'white',
                 border: '1px solid #444',
                 borderRadius: '5px',
-                cursor: 'pointer'
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.7 : 1
               }}
             >
               {isLogin ? '회원가입하기' : '로그인으로 돌아가기'}
