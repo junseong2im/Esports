@@ -109,16 +109,32 @@ export default function Home() {
         width: '100%',
         height: '100%',
       }}>
-        <Image
-          src={backgroundImages[currentImageIndex]}
-          alt="Background"
-          fill
-          style={{
-            objectFit: 'cover',
-            objectPosition: 'center',
-          }}
-          priority
-        />
+        {backgroundImages.map((image, index) => (
+          <div
+            key={image}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              opacity: index === currentImageIndex ? 1 : 0,
+              transition: 'opacity 1s ease-in-out',
+              zIndex: index === currentImageIndex ? 1 : 0,
+            }}
+          >
+            <Image
+              src={image}
+              alt={`Background ${index + 1}`}
+              fill
+              style={{
+                objectFit: 'cover',
+                objectPosition: 'center',
+              }}
+              priority={index === 0}
+            />
+          </div>
+        ))}
       </div>
 
       {/* 어두운 오버레이 */}
