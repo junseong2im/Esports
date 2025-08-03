@@ -16,6 +16,8 @@ export default function Home() {
   const [selectedTeam, setSelectedTeam] = useState<TeamName>("T1");
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
 
   // 동영상 자동 재생 설정
   useEffect(() => {
@@ -51,6 +53,12 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isLogin && (!agreeTerms || !agreePrivacy)) {
+      setMessage('이용약관과 개인정보 처리방침에 동의해주세요.');
+      return;
+    }
+
     if (!validateInput()) return;
 
     setIsLoading(true);
@@ -146,12 +154,10 @@ export default function Home() {
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         borderRadius: '5px',
       }}>
-        <p style={{ marginBottom: '0.5rem' }}>
+        <p>
           본 서비스는 Riot Games 및 LCK와 무관한 비공식 프로젝트입니다.
           이 프로젝트는 팬 커뮤니티를 위한 비영리 서비스입니다.
-        </p>
-        <p>
-          배경 영상 출처: © 2024 LCK All Rights Reserved. | YouTube™는 Google LLC의 등록 상표입니다.
+          배경 영상 출처: © 2024 LCK All Rights Reserved.
         </p>
       </div>
 
@@ -255,28 +261,88 @@ export default function Home() {
               />
             </div>
             {!isLogin && (
-              <div style={{ marginBottom: '2rem' }}>
-                <select
-                  value={selectedTeam}
-                  onChange={(e) => setSelectedTeam(e.target.value as TeamName)}
-                  disabled={isLoading}
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem 1rem',
-                    fontSize: '1rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '5px',
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <select
+                    value={selectedTeam}
+                    onChange={(e) => setSelectedTeam(e.target.value as TeamName)}
+                    disabled={isLoading}
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem 1rem',
+                      fontSize: '1rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '5px',
+                      color: '#ffffff',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                      appearance: 'none',
+                      backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.7rem top 50%',
+                      backgroundSize: '0.65rem auto',
+                    }}
+                  >
+                    {VALID_TEAMS.map((team) => (
+                      <option 
+                        key={team} 
+                        value={team}
+                        style={{
+                          backgroundColor: 'rgb(30, 30, 30)',
+                          color: '#ffffff',
+                          padding: '0.5rem'
+                        }}
+                      >
+                        {team}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
                     color: '#ffffff',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                >
-                  {VALID_TEAMS.map((team) => (
-                    <option key={team} value={team}>{team}</option>
-                  ))}
-                </select>
-              </div>
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      style={{
+                        width: '1rem',
+                        height: '1rem',
+                        accentColor: '#1da1f2'
+                      }}
+                    />
+                    서비스 이용약관 동의 (필수)
+                  </label>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={agreePrivacy}
+                      onChange={(e) => setAgreePrivacy(e.target.checked)}
+                      style={{
+                        width: '1rem',
+                        height: '1rem',
+                        accentColor: '#1da1f2'
+                      }}
+                    />
+                    개인정보 수집 및 이용 동의 (필수)
+                  </label>
+                </div>
+              </>
             )}
             {message && (
               <p style={{
@@ -319,6 +385,8 @@ export default function Home() {
                   setLoginId('');
                   setPassword('');
                   setMessage('');
+                  setAgreeTerms(false);
+                  setAgreePrivacy(false);
                 }}
                 disabled={isLoading}
                 style={{
