@@ -1,17 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { login, signup } from '@/lib/api';
 import { VALID_TEAMS, TeamName } from '@/types';
 
-// 배경 이미지 배열
-const backgroundImages = [
-  '/images/background/1.jpg',
-  '/images/background/2.jpg',
-  '/images/background/3.jpg',
-  '/images/background/4.jpg'
-];
+// 배경 이미지
+const backgroundImage = '/images/background/1.jpg';
 
 export default function Home() {
   const router = useRouter();
@@ -20,21 +15,7 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<TeamName>("T1");
   const [message, setMessage] = useState('');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
-  // 이미지가 2개 이상일 때만 슬라이드쇼 실행
-  useEffect(() => {
-    if (backgroundImages.length > 1) {
-      const intervalId = setInterval(() => {
-        setCurrentImageIndex((prevIndex) => 
-          prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
-        );
-      }, 3500);
-
-      return () => clearInterval(intervalId);
-    }
-  }, []);
 
   // 입력값 유효성 검사
   const validateInput = () => {
@@ -100,7 +81,7 @@ export default function Home() {
       overflow: 'hidden',
       backgroundColor: '#000'
     }}>
-      {/* 배경 이미지 슬라이드쇼 */}
+      {/* 배경 이미지 */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -108,47 +89,37 @@ export default function Home() {
         width: '100%',
         height: '100%',
       }}>
-        {backgroundImages.map((image, index) => (
-          <div
-            key={image}
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '90%',
-              height: '90%',
-              transform: 'translate(-50%, -50%)',
-              opacity: index === currentImageIndex ? 1 : 0,
-              transition: 'opacity 1s ease-in-out',
-              zIndex: index === currentImageIndex ? 1 : 0,
-              boxShadow: '0 0 200px 100px rgba(0, 0, 0, 0.7) inset',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <Image
-              src={image}
-              alt={`Background ${index + 1}`}
-              fill
-              quality={100}
-              sizes="100vw"
-              style={{
-                objectFit: 'contain',
-                objectPosition: 'center',
-                transform: 'scale(1.02)', // 약간의 확대로 경계 블러 효과 보완
-              }}
-              priority={index === 0}
-              loading="eager"
-            />
-          </div>
-        ))}
+        <Image
+          src={backgroundImage}
+          alt="Background"
+          fill
+          quality={100}
+          sizes="100vw"
+          style={{
+            objectFit: 'cover',
+            objectPosition: 'center',
+          }}
+          priority
+        />
       </div>
+
+      {/* 어두운 오버레이 */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        zIndex: 1
+      }} />
 
       {/* 이미지 설명 */}
       <div style={{
         position: 'absolute',
         top: '1rem',
         right: '1rem',
-        color: 'rgba(255, 255, 255, 0.8)',
+        color: 'rgba(255, 255, 255, 0.9)',
         fontSize: '0.9rem',
         textAlign: 'right',
         zIndex: 2,
@@ -156,22 +127,9 @@ export default function Home() {
         padding: '0.75rem 1rem',
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         borderRadius: '5px',
-        backdropFilter: 'blur(5px)',
       }}>
         2024 LCK Summer Split 우승팀 Hanwha Life Esports
       </div>
-
-      {/* 어두운 오버레이 - 더 부드러운 그라데이션 효과 */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%)',
-        backdropFilter: 'blur(3px)',
-        zIndex: 1
-      }} />
 
       {/* 로그인 컨테이너 */}
       <div style={{
