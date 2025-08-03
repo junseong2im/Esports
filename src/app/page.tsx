@@ -99,22 +99,17 @@ export default function Home() {
         height: '95%',
         transform: 'translate(-50%, -50%)',
       }}>
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
+        <iframe
+          src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           style={{
             position: 'absolute',
             width: '100%',
             height: '100%',
-            objectFit: 'contain',
-            objectPosition: 'center',
+            border: 'none',
+            objectFit: 'cover',
           }}
-        >
-          <source src={backgroundVideo} type="video/mp4" />
-        </video>
+        />
       </div>
 
       {/* 어두운 오버레이 */}
@@ -128,7 +123,38 @@ export default function Home() {
         zIndex: 1
       }} />
 
-      {/* 이미지 설명 */}
+      {/* 저작권 및 법적 고지 */}
+      <div style={{
+        position: 'absolute',
+        bottom: '1rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '90%',
+        maxWidth: '800px',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '0.75rem',
+        textAlign: 'center',
+        zIndex: 2,
+        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+        padding: '0.75rem 1rem',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        borderRadius: '5px',
+      }}>
+        <p style={{ marginBottom: '0.5rem' }}>
+          본 서비스는 Riot Games 및 LCK와 무관한 비공식 프로젝트입니다.
+        </p>
+        <p style={{ marginBottom: '0.5rem' }}>
+          배경 영상 출처: © 2024 LCK All Rights Reserved.
+        </p>
+        <p style={{ marginBottom: '0.5rem' }}>
+          이 프로젝트는 팬 커뮤니티를 위한 비영리 서비스이며, 모든 영상 콘텐츠는 각 저작권자에게 귀속됩니다.
+        </p>
+        <p>
+          YouTube™는 Google LLC의 등록 상표입니다.
+        </p>
+      </div>
+
+      {/* 우승팀 정보 */}
       <div style={{
         position: 'absolute',
         top: '1rem',
