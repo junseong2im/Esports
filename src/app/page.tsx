@@ -100,7 +100,7 @@ export default function Home() {
         transform: 'translate(-50%, -50%)',
       }}>
         <iframe
-          src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0"
+          src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0&vq=hd1080&hd=1&modestbranding=1"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           style={{
             position: 'absolute',
@@ -109,6 +109,8 @@ export default function Home() {
             border: 'none',
             objectFit: 'cover',
           }}
+          loading="eager"
+          title="LCK Background Video"
         />
       </div>
 
