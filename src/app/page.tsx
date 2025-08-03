@@ -84,32 +84,33 @@ export default function Home() {
       {/* 배경 이미지 */}
       <div style={{
         position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
+        top: '50%',
+        left: '50%',
+        width: '95%', // 전체 화면의 95%로 설정
+        height: '95%', // 전체 화면의 95%로 설정
+        transform: 'translate(-50%, -50%)',
       }}>
         <Image
           src={backgroundImage}
           alt="Background"
           fill
           quality={100}
-          sizes="100vw"
+          sizes="95vw"
           style={{
-            objectFit: 'cover',
+            objectFit: 'contain', // cover에서 contain으로 변경하여 비율 유지
             objectPosition: 'center',
           }}
           priority
         />
       </div>
 
-      {/* 어두운 오버레이 */}
+      {/* 어두운 오버레이 - 이미지 크기에 맞춤 */}
       <div style={{
         position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
+        top: '2.5%',
+        left: '2.5%',
+        width: '95%',
+        height: '95%',
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         zIndex: 1
       }} />
