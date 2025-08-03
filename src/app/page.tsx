@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { login, signup } from '@/lib/api';
+import { VALID_TEAMS, TeamName } from '@/types';
 
 // 배경 이미지 배열
 const backgroundImages = [
@@ -17,10 +19,12 @@ const backgroundImages = [
 export default function Home() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState<TeamName>("T1");
   const [message, setMessage] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 이미지 슬라이드쇼 효과
   useEffect(() => {
@@ -28,18 +32,64 @@ export default function Home() {
       setCurrentImageIndex((prevIndex) => 
         prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
       );
-    }, 3500); // 이미지 전환 간격 (3.5초)
+    }, 3500);
 
     return () => clearInterval(intervalId);
   }, []);
 
+  // 입력값 유효성 검사
+  const validateInput = () => {
+    if (!loginId || !password) {
+      setMessage('아이디와 비밀번호를 모두 입력해주세요.');
+      return false;
+    }
+
+    if (!isLogin) {
+      // 회원가입 시 추가 검증
+      if (!loginId.match("^[a-zA-Z]+$")) {
+        setMessage('ID는 영어 알파벳만 사용할 수 있습니다.');
+        return false;
+      }
+
+      if (!password.match("^(?=.*[a-zA-Z])(?=.*\\d).{6,}$")) {
+        setMessage('비밀번호는 영어+숫자 조합으로 6자 이상이어야 합니다.');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLogin) {
-      router.push('/schedule');
-    } else {
-      setMessage('회원가입이 완료되었습니다.');
-      setIsLogin(true);
+    if (!validateInput()) return;
+
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      if (isLogin) {
+        const response = await login(loginId, password);
+        if (response.includes('성공')) {
+          router.push('/schedule');
+        } else {
+          setMessage(response);
+        }
+      } else {
+        await signup(loginId, password, selectedTeam);
+        setMessage('회원가입이 완료되었습니다.');
+        setIsLogin(true);
+        setLoginId('');
+        setPassword('');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        setMessage(error.message);
+      } else {
+        setMessage('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,9 +177,10 @@ export default function Home() {
             <div style={{ marginBottom: '1.5rem' }}>
               <input
                 type="text"
-                placeholder="아이디"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="아이디 (영문)"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                disabled={isLoading}
                 style={{
                   width: '100%',
                   padding: '0.8rem 1rem',
@@ -143,12 +194,13 @@ export default function Home() {
                 }}
               />
             </div>
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: !isLogin ? '1.5rem' : '2rem' }}>
               <input
                 type="password"
-                placeholder="비밀번호"
+                placeholder="비밀번호 (영문+숫자 6자 이상)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
                 style={{
                   width: '100%',
                   padding: '0.8rem 1rem',
@@ -162,6 +214,40 @@ export default function Home() {
                 }}
               />
             </div>
+            {!isLogin && (
+              <div style={{ marginBottom: '2rem' }}>
+                <select
+                  value={selectedTeam}
+                  onChange={(e) => setSelectedTeam(e.target.value as TeamName)}
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem 1rem',
+                    fontSize: '1rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '5px',
+                    color: '#ffffff',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                >
+                  {VALID_TEAMS.map((team) => (
+                    <option key={team} value={team}>{team}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {message && (
+              <p style={{
+                marginBottom: '1rem',
+                textAlign: 'center',
+                color: message.includes('성공') ? '#4CAF50' : '#f44336',
+                fontSize: '0.9rem'
+              }}>
+                {message}
+              </p>
+            )}
             <div style={{
               display: 'flex',
               gap: '1rem',
@@ -169,6 +255,7 @@ export default function Home() {
             }}>
               <button
                 type="submit"
+                disabled={isLoading}
                 style={{
                   padding: '0.8rem 1.5rem',
                   fontSize: '1rem',
@@ -176,17 +263,24 @@ export default function Home() {
                   border: isLogin ? 'none' : '1px solid #1da1f2',
                   borderRadius: '5px',
                   color: '#ffffff',
-                  cursor: 'pointer',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   width: '45%',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  opacity: isLoading ? 0.7 : 1
                 }}
               >
-                {isLogin ? '로그인' : '회원가입'}
+                {isLoading ? '처리 중...' : (isLogin ? '로그인' : '회원가입')}
               </button>
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setLoginId('');
+                  setPassword('');
+                  setMessage('');
+                }}
+                disabled={isLoading}
                 style={{
                   padding: '0.8rem 1.5rem',
                   fontSize: '1rem',
@@ -194,24 +288,16 @@ export default function Home() {
                   border: !isLogin ? 'none' : '1px solid #1da1f2',
                   borderRadius: '5px',
                   color: '#ffffff',
-                  cursor: 'pointer',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   width: '45%',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  opacity: isLoading ? 0.7 : 1
                 }}
               >
                 {!isLogin ? '회원가입' : '계정 만들기'}
               </button>
             </div>
-            {message && (
-              <p style={{
-                marginTop: '1rem',
-                textAlign: 'center',
-                color: '#4CAF50'
-              }}>
-                {message}
-              </p>
-            )}
           </form>
         </div>
 
