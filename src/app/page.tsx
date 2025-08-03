@@ -115,12 +115,14 @@ export default function Home() {
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: '90%', // 이미지 크기를 90%로 축소
-              height: '90%', // 이미지 크기를 90%로 축소
+              width: '90%',
+              height: '90%',
               transform: 'translate(-50%, -50%)',
               opacity: index === currentImageIndex ? 1 : 0,
               transition: 'opacity 1s ease-in-out',
               zIndex: index === currentImageIndex ? 1 : 0,
+              boxShadow: '0 0 200px 100px rgba(0, 0, 0, 0.7) inset',
+              backdropFilter: 'blur(10px)',
             }}
           >
             <Image
@@ -128,7 +130,7 @@ export default function Home() {
               alt={`Background ${index + 1}`}
               fill
               style={{
-                objectFit: 'contain', // cover에서 contain으로 변경
+                objectFit: 'contain',
                 objectPosition: 'center',
               }}
               priority={index === 0}
@@ -142,26 +144,28 @@ export default function Home() {
         position: 'absolute',
         top: '1rem',
         right: '1rem',
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: 'rgba(255, 255, 255, 0.8)',
         fontSize: '0.9rem',
         textAlign: 'right',
         zIndex: 2,
         textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-        padding: '0.5rem',
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        padding: '0.75rem 1rem',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
         borderRadius: '5px',
+        backdropFilter: 'blur(5px)',
       }}>
-        2024 LCK Spring Split 우승팀 T1
+        2024 LCK Summer Split 우승팀 Hanwha Life Esports
       </div>
 
-      {/* 어두운 오버레이 */}
+      {/* 어두운 오버레이 - 더 부드러운 그라데이션 효과 */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%)',
+        backdropFilter: 'blur(3px)',
         zIndex: 1
       }} />
 
