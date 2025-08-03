@@ -1,21 +1,30 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { login, signup } from '@/lib/api';
 import { VALID_TEAMS, TeamName } from '@/types';
 
-// 배경 이미지
-const backgroundImage = '/images/background/1.jpg';
+// 배경 동영상
+const backgroundVideo = '/videos/background.mp4';
 
 export default function Home() {
   const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isLogin, setIsLogin] = useState(true);
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<TeamName>("T1");
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 동영상 자동 재생 설정
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(error => {
+        console.log("Video autoplay failed:", error);
+      });
+    }
+  }, []);
 
   // 입력값 유효성 검사
   const validateInput = () => {
@@ -81,30 +90,34 @@ export default function Home() {
       overflow: 'hidden',
       backgroundColor: '#000'
     }}>
-      {/* 배경 이미지 */}
+      {/* 배경 동영상 */}
       <div style={{
         position: 'absolute',
         top: '50%',
         left: '50%',
-        width: '95%', // 전체 화면의 95%로 설정
-        height: '95%', // 전체 화면의 95%로 설정
+        width: '95%',
+        height: '95%',
         transform: 'translate(-50%, -50%)',
       }}>
-        <Image
-          src={backgroundImage}
-          alt="Background"
-          fill
-          quality={100}
-          sizes="95vw"
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
           style={{
-            objectFit: 'contain', // cover에서 contain으로 변경하여 비율 유지
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
             objectPosition: 'center',
           }}
-          priority
-        />
+        >
+          <source src={backgroundVideo} type="video/mp4" />
+        </video>
       </div>
 
-      {/* 어두운 오버레이 - 이미지 크기에 맞춤 */}
+      {/* 어두운 오버레이 */}
       <div style={{
         position: 'absolute',
         top: '2.5%',
