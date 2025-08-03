@@ -93,21 +93,25 @@ export default function Home() {
       {/* 배경 동영상 */}
       <div style={{
         position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: '95%',
-        height: '95%',
-        transform: 'translate(-50%, -50%)',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
       }}>
         <iframe
           src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0&vq=hd1080&hd=1&modestbranding=1"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           style={{
             position: 'absolute',
-            width: '100%',
-            height: '100%',
+            top: '50%',
+            left: '50%',
+            width: '100vw',
+            height: '100vh',
+            transform: 'translate(-50%, -50%) scale(1.1)', // 약간 확대하여 검은 여백 제거
             border: 'none',
             objectFit: 'cover',
+            pointerEvents: 'none', // 동영상 클릭 방지
           }}
           loading="eager"
           title="LCK Background Video"
@@ -117,10 +121,10 @@ export default function Home() {
       {/* 어두운 오버레이 */}
       <div style={{
         position: 'absolute',
-        top: '2.5%',
-        left: '2.5%',
-        width: '95%',
-        height: '95%',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         zIndex: 1
       }} />
@@ -144,15 +148,10 @@ export default function Home() {
       }}>
         <p style={{ marginBottom: '0.5rem' }}>
           본 서비스는 Riot Games 및 LCK와 무관한 비공식 프로젝트입니다.
-        </p>
-        <p style={{ marginBottom: '0.5rem' }}>
-          배경 영상 출처: © 2024 LCK All Rights Reserved.
-        </p>
-        <p style={{ marginBottom: '0.5rem' }}>
-          이 프로젝트는 팬 커뮤니티를 위한 비영리 서비스이며, 모든 영상 콘텐츠는 각 저작권자에게 귀속됩니다.
+          이 프로젝트는 팬 커뮤니티를 위한 비영리 서비스입니다.
         </p>
         <p>
-          YouTube™는 Google LLC의 등록 상표입니다.
+          배경 영상 출처: © 2024 LCK All Rights Reserved. | YouTube™는 Google LLC의 등록 상표입니다.
         </p>
       </div>
 
