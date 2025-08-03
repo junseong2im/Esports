@@ -108,8 +108,8 @@ export default function Home() {
         overflow: 'hidden',
       }}>
         <iframe
-          src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0&vq=hd1080&hd=1&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0&vq=hd1080&hd=1&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1&enablejsapi=0&origin=http://localhost:3000&widget_referrer=http://localhost:3000&cc_load_policy=0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
           style={{
             position: 'absolute',
             top: '50%',
@@ -137,6 +137,30 @@ export default function Home() {
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         zIndex: 1
       }} />
+
+      {/* 저작권 및 법적 고지 */}
+      <div style={{
+        position: 'absolute',
+        bottom: '1rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '90%',
+        maxWidth: '800px',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '0.75rem',
+        textAlign: 'center',
+        zIndex: 2,
+        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+        padding: '0.75rem 1rem',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        borderRadius: '5px',
+      }}>
+        <p>
+          본 서비스는 Riot Games 및 LCK와 무관한 비공식 프로젝트입니다.
+          이 프로젝트는 팬 커뮤니티를 위한 비영리 서비스입니다.
+          배경 영상 출처: © 2024 LCK All Rights Reserved.
+        </p>
+      </div>
 
       {/* 우승팀 정보 */}
       <div style={{
