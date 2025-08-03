@@ -269,7 +269,7 @@ export default function Home() {
                   opacity: isLoading ? 0.7 : 1
                 }}
               >
-                {isLoading ? '처리 중...' : (isLogin ? '로그인' : '회원가입')}
+                {isLoading ? '처리 중...' : (isLogin ? '로그인' : '가입하기')}
               </button>
               <button
                 type="button"
@@ -294,7 +294,7 @@ export default function Home() {
                   opacity: isLoading ? 0.7 : 1
                 }}
               >
-                {!isLogin ? '회원가입' : '계정 만들기'}
+                {!isLogin ? '돌아가기' : '계정 만들기'}
               </button>
             </div>
           </form>
