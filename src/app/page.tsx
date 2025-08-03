@@ -8,12 +8,7 @@ import { VALID_TEAMS, TeamName } from '@/types';
 // 배경 이미지 배열
 const backgroundImages = [
   '/images/background/slide1.jpg',
-  '/images/background/slide2.jpg',
-  '/images/background/slide3.jpg',
-  '/images/background/slide4.jpg',
-  '/images/background/slide5.jpg',
-  '/images/background/slide6.jpg',
-  '/images/background/slide7.jpg'
+  // 다른 이미지들은 주석 처리하거나 제거
 ];
 
 export default function Home() {
@@ -26,15 +21,17 @@ export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 이미지 슬라이드쇼 효과
+  // 이미지가 2개 이상일 때만 슬라이드쇼 실행
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 3500);
+    if (backgroundImages.length > 1) {
+      const intervalId = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => 
+          prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
+        );
+      }, 3500);
 
-    return () => clearInterval(intervalId);
+      return () => clearInterval(intervalId);
+    }
   }, []);
 
   // 입력값 유효성 검사
