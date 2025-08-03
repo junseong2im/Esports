@@ -129,11 +129,15 @@ export default function Home() {
               src={image}
               alt={`Background ${index + 1}`}
               fill
+              quality={100}
+              sizes="100vw"
               style={{
                 objectFit: 'contain',
                 objectPosition: 'center',
+                transform: 'scale(1.02)', // 약간의 확대로 경계 블러 효과 보완
               }}
               priority={index === 0}
+              loading="eager"
             />
           </div>
         ))}
