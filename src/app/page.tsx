@@ -232,12 +232,15 @@ export default function Home() {
           textAlign: 'center',
           color: 'rgba(255, 255, 255, 0.7)',
           fontSize: '0.8rem',
-          maxWidth: '400px',
+          maxWidth: '600px',
           padding: '0 1rem',
           textShadow: '0 2px 4px rgba(0,0,0,0.5)'
         }}>
           <p>본 서비스는 Riot Games 및 LCK와 무관한 비공식 프로젝트입니다.</p>
           <p>이 프로젝트는 팬 커뮤니티를 위한 비영리 서비스입니다.</p>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
+            배경 이미지 출처: © LCK Flickr (https://www.flickr.com/photos/leagueoflegendslck/)
+          </p>
         </div>
       </div>
     </div>
