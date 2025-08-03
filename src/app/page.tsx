@@ -111,10 +111,11 @@ export default function Home() {
             key={image}
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
+              top: '50%',
+              left: '50%',
+              width: '90%', // 이미지 크기를 90%로 축소
+              height: '90%', // 이미지 크기를 90%로 축소
+              transform: 'translate(-50%, -50%)',
               opacity: index === currentImageIndex ? 1 : 0,
               transition: 'opacity 1s ease-in-out',
               zIndex: index === currentImageIndex ? 1 : 0,
@@ -125,13 +126,30 @@ export default function Home() {
               alt={`Background ${index + 1}`}
               fill
               style={{
-                objectFit: 'cover',
+                objectFit: 'contain', // cover에서 contain으로 변경
                 objectPosition: 'center',
               }}
               priority={index === 0}
             />
           </div>
         ))}
+      </div>
+
+      {/* 이미지 설명 */}
+      <div style={{
+        position: 'absolute',
+        top: '1rem',
+        right: '1rem',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '0.9rem',
+        textAlign: 'right',
+        zIndex: 2,
+        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+        padding: '0.5rem',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '5px',
+      }}>
+        2024 LCK Spring Split 우승팀 T1
       </div>
 
       {/* 어두운 오버레이 */}
