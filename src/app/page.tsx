@@ -7,8 +7,10 @@ import { VALID_TEAMS, TeamName } from '@/types';
 
 // 배경 이미지 배열
 const backgroundImages = [
-  '/images/background/slide1.jpg',
-  // 다른 이미지들은 주석 처리하거나 제거
+  '/images/background/1.jpg',
+  '/images/background/2.jpg',
+  '/images/background/3.jpg',
+  '/images/background/4.jpg'
 ];
 
 export default function Home() {
