@@ -1,43 +1,44 @@
-import { Match } from '@/types';
+import { MatchSchedule } from '@/types';
 
-export const matches: Match[] = [
+export const matches: MatchSchedule[] = [
   {
-    id: '1',
-    team1: {
-      name: 'T1',
-      logo: '/team/t1.png'
-    },
-    team2: {
-      name: 'Gen.G',
-      logo: '/team/geng.png'
-    },
-    date: '2024-03-20',
-    time: '17:00'
+    gameType: "LOL",
+    team1: "T1",
+    team2: "Gen.G",
+    dateTime: "2024-03-10 17:00:00",
+    tournamentName: "LCK 2024 Spring",
+    status: "SCHEDULED"
   },
   {
-    id: '2',
-    team1: {
-      name: 'DRX',
-      logo: '/team/drx.png'
-    },
-    team2: {
-      name: 'KT',
-      logo: '/team/kt.png'
-    },
-    date: '2024-03-20',
-    time: '20:00'
+    gameType: "LOL",
+    team1: "DK",
+    team2: "KT",
+    dateTime: "2024-03-10 20:00:00",
+    tournamentName: "LCK 2024 Spring",
+    status: "SCHEDULED"
   },
   {
-    id: '3',
-    team1: {
-      name: 'DPlus',
-      logo: '/team/dplus.png'
-    },
-    team2: {
-      name: 'Hanwha Life',
-      logo: '/team/hanwha.png'
-    },
-    date: '2024-03-21',
-    time: '17:00'
+    gameType: "LOL",
+    team1: "HLE",
+    team2: "DRX",
+    dateTime: "2024-03-11 17:00:00",
+    tournamentName: "LCK 2024 Spring",
+    status: "SCHEDULED"
+  },
+  {
+    gameType: "LOL",
+    team1: "NS",
+    team2: "BRO",
+    dateTime: "2024-03-11 20:00:00",
+    tournamentName: "LCK 2024 Spring",
+    status: "SCHEDULED"
+  },
+  {
+    gameType: "LOL",
+    team1: "T1",
+    team2: "KT",
+    dateTime: "2024-03-12 17:00:00",
+    tournamentName: "LCK 2024 Spring",
+    status: "SCHEDULED"
   }
 ]; 
