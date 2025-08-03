@@ -21,24 +21,16 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [fadeIn, setFadeIn] = useState(true);
 
   // 이미지 슬라이드쇼 효과
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setFadeIn(false); // 페이드 아웃 시작
-      
-      setTimeout(() => {
-        setCurrentImageIndex((prevIndex) => 
-          prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
-        );
-        setFadeIn(true); // 새 이미지와 함께 페이드 인 시작
-      }, 500); // 페이드 아웃 지속 시간
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
+      );
     }, 3500); // 이미지 전환 간격 (3.5초)
 
-    return () => {
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,8 +58,6 @@ export default function Home() {
         left: 0,
         width: '100%',
         height: '100%',
-        opacity: fadeIn ? 1 : 0,
-        transition: 'opacity 0.5s ease-in-out',
       }}>
         <Image
           src={backgroundImages[currentImageIndex]}
