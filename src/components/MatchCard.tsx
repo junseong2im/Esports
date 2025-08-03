@@ -1,64 +1,67 @@
 import { useState } from 'react';
 import Image from 'next/image';
-import { Match } from '@/types';
+import { MatchSchedule } from '@/types';
 
 interface MatchCardProps {
-  match: Match;
+  match: MatchSchedule;
 }
 
 export default function MatchCard({ match }: MatchCardProps) {
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isNotificationSet, setIsNotificationSet] = useState(false);
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 mb-4 flex items-center justify-between">
-      <div className="flex items-center flex-1">
-        <div className="flex items-center">
-          <div className="w-12 h-12 relative">
-            <Image
-              src={match.team1.logo}
-              alt={match.team1.name}
-              fill
-              className="object-contain"
-            />
-          </div>
-          <span className="mx-2 font-semibold text-white">{match.team1.name}</span>
-        </div>
-        
-        <span className="mx-4 text-gray-400">vs</span>
-        
-        <div className="flex items-center">
-          <span className="mx-2 font-semibold text-white">{match.team2.name}</span>
-          <div className="w-12 h-12 relative">
-            <Image
-              src={match.team2.logo}
-              alt={match.team2.name}
-              fill
-              className="object-contain"
-            />
-          </div>
-        </div>
+    <div style={{
+      backgroundColor: 'rgba(30, 30, 30, 0.9)',
+      borderRadius: '10px',
+      padding: '1.5rem',
+      marginBottom: '1rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '1rem'
+    }}>
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        <span style={{ color: '#ffffff', fontSize: '1.1rem' }}>{match.team1}</span>
       </div>
 
-      <div className="flex flex-col items-end ml-4">
-        <div className="text-gray-400 text-sm mb-2">
-          {new Date(match.date).toLocaleDateString('ko-KR', {
+      <div style={{ 
+        textAlign: 'center',
+        padding: '0 1rem'
+      }}>
+        <div style={{ color: '#888', fontSize: '0.9rem' }}>
+          {new Date(match.dateTime).toLocaleDateString('ko-KR', {
+            year: 'numeric',
             month: 'long',
             day: 'numeric'
           })}
-          <br />
-          {match.time}
         </div>
-        <button
-          onClick={() => setIsSubscribed(!isSubscribed)}
-          className={`px-4 py-2 rounded-full transition-colors ${
-            isSubscribed
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
-        >
-          {isSubscribed ? '✅ 설정됨' : '🔔 알림 설정'}
-        </button>
+        <div style={{ color: '#888', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          {new Date(match.dateTime).toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </div>
       </div>
+
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        <span style={{ color: '#ffffff', fontSize: '1.1rem' }}>{match.team2}</span>
+      </div>
+
+      <button
+        onClick={() => setIsNotificationSet(!isNotificationSet)}
+        style={{
+          backgroundColor: isNotificationSet ? '#4CAF50' : 'transparent',
+          border: `1px solid ${isNotificationSet ? '#4CAF50' : '#666'}`,
+          color: '#ffffff',
+          padding: '0.5rem 1rem',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          fontSize: '0.9rem'
+        }}
+      >
+        {isNotificationSet ? '✓ 설정됨' : '알림 설정'}
+      </button>
     </div>
   );
 } 
