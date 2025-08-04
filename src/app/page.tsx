@@ -248,10 +248,14 @@ export default function Home() {
                     color: '#ffffff',
                     outline: 'none',
                     transition: 'all 0.2s ease',
-                    '&:focus': {
-                      borderColor: '#1da1f2',
-                      boxShadow: '0 0 0 2px rgba(29, 161, 242, 0.2)'
-                    }
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#1da1f2';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(29, 161, 242, 0.2)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -275,6 +279,14 @@ export default function Home() {
                     color: '#ffffff',
                     outline: 'none',
                     transition: 'all 0.2s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#1da1f2';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(29, 161, 242, 0.2)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.boxShadow = 'none';
                   }}
                 />
                 {!isLogin && password && (

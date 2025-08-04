@@ -23,7 +23,7 @@ export const useNetwork = (): NetworkState => {
     const checkConnectionSpeed = async () => {
       try {
         const startTime = performance.now();
-        const response = await fetch('/api/health-check', {
+        await fetch('/api/health-check', {
           method: 'HEAD',
         });
         const endTime = performance.now();
