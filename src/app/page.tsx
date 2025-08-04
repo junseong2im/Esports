@@ -348,19 +348,24 @@ export default function Home() {
                     </select>
                   </div>
                   <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      color: '#ffffff',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      marginBottom: '0.5rem',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        color: '#1da1f2'
-                      }
-                    }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        marginBottom: '0.5rem',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#1da1f2';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = '#ffffff';
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={agreeTerms}
@@ -374,18 +379,23 @@ export default function Home() {
                       />
                       서비스 이용약관 동의 (필수)
                     </label>
-                    <label style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      color: '#ffffff',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        color: '#1da1f2'
-                      }
-                    }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        color: '#ffffff',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#1da1f2';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = '#ffffff';
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={agreePrivacy}
@@ -442,12 +452,27 @@ export default function Home() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      backgroundColor: isLogin ? '#1a91da' : 'rgba(29, 161, 242, 0.1)'
-                    },
-                    '&:active': {
-                      transform: 'scale(0.98)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.backgroundColor = isLogin ? '#1a91da' : 'rgba(29, 161, 242, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.backgroundColor = isLogin ? '#1da1f2' : 'transparent';
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(0.98)';
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1)';
                     }
                   }}
                 >
@@ -484,12 +509,27 @@ export default function Home() {
                     fontWeight: 'bold',
                     opacity: isLoading ? 0.7 : 1,
                     transform: 'scale(1)',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      backgroundColor: !isLogin ? '#1a91da' : 'rgba(29, 161, 242, 0.1)'
-                    },
-                    '&:active': {
-                      transform: 'scale(0.98)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.backgroundColor = !isLogin ? '#1a91da' : 'rgba(29, 161, 242, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.backgroundColor = !isLogin ? '#1da1f2' : 'transparent';
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(0.98)';
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1)';
                     }
                   }}
                 >
