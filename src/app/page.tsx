@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { login, signup } from '@/lib/api';
+import { login, signup, testConnection } from '@/lib/api';
 import { VALID_TEAMS, TeamName } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PageTransition from '@/components/PageTransition';
@@ -37,6 +37,21 @@ export default function Home() {
     }
   }, [isOnline, isConnectionSlow]);
 
+  useEffect(() => {
+    // 백엔드 연결 테스트
+    const testBackendConnection = async () => {
+      try {
+        await testConnection();
+        console.log('Backend is connected!');
+      } catch (error) {
+        console.error('Backend connection failed:', error);
+        showToast('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+      }
+    };
+
+    testBackendConnection();
+  }, []);
+
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
     setToastConfig({ show: true, message, type });
   };
@@ -58,9 +73,14 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!isOnline) {
-      showToast('인터넷 연결을 확인해주세요.', 'error');
+
+    if (!loginId || !password) {
+      showToast('아이디와 비밀번호를 입력해주세요.', 'error');
+      return;
+    }
+
+    if (!isLogin && !selectedTeam) {
+      showToast('응원하는 팀을 선택해주세요.', 'error');
       return;
     }
 
@@ -80,20 +100,30 @@ export default function Home() {
     }
 
     setIsLoading(true);
+    setMessage('');
 
     try {
       if (isLogin) {
         const response = await login(loginId, password);
         if (response.includes('성공')) {
+          // 로그인 성공 시 토큰을 localStorage에 저장
+          const token = response.split('|')[1]; // 예: "로그인 성공|eyJhbGciOiJ..."
+          if (token) {
+            localStorage.setItem('token', token);
+          }
           showToast('로그인 성공!', 'success');
           setTimeout(() => router.push('/schedule'), 1000);
         } else {
           showToast(response, 'error');
         }
       } else {
-        await signup(loginId, password, selectedTeam);
+        const response = await signup(loginId, password, selectedTeam);
         showToast('회원가입이 완료되었습니다!', 'success');
         setIsLogin(true);
+        setLoginId('');
+        setPassword('');
+        setAgreeTerms(false);
+        setAgreePrivacy(false);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -156,23 +186,6 @@ export default function Home() {
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
           zIndex: 1
         }} />
-
-        {/* 우승팀 정보 */}
-        <div style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          color: 'rgba(255, 255, 255, 0.9)',
-          fontSize: '0.9rem',
-          textAlign: 'right',
-          zIndex: 2,
-          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-          padding: '0.75rem 1rem',
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
-          borderRadius: '5px',
-        }}>
-          2024 LCK Summer Split 우승팀 Hanwha Life Esports
-        </div>
 
         {/* 로그인 컨테이너 */}
         <div style={{
@@ -569,7 +582,7 @@ export default function Home() {
               message={toastConfig.message}
               type={toastConfig.type}
               onClose={() => setToastConfig(prev => ({ ...prev, show: false }))}
-            />
+          />
           )}
 
           {/* 네트워크 상태 표시 (오프라인일 때) */}
@@ -589,7 +602,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      </div>
+    </div>
     </PageTransition>
   );
 }
