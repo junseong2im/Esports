@@ -125,6 +125,65 @@ export const getUserById = async (id: number): Promise<User> => {
   }
 };
 
+// 경기 일정 관련 API
+export const fetchMatches = async () => {
+  try {
+    const response = await fetchWithRetry(`${API_BASE}/api/schedules/crawl`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    if (!response.ok) {
+      throw new Error('경기 일정을 불러오는데 실패했습니다.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch matches:', error);
+    throw error;
+  }
+};
+
+// 경기 알림 설정
+export const subscribeToMatch = async (matchId: string, token: string) => {
+  try {
+    const response = await fetchWithRetry(`${API_BASE}/api/matches/${matchId}/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('경기 알림 설정에 실패했습니다.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to subscribe to match:', error);
+    throw error;
+  }
+};
+
+// 경기 알림 해제
+export const unsubscribeFromMatch = async (matchId: string, token: string) => {
+  try {
+    const response = await fetchWithRetry(`${API_BASE}/api/matches/${matchId}/unsubscribe`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('경기 알림 해제에 실패했습니다.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to unsubscribe from match:', error);
+    throw error;
+  }
+};
+
 // 백엔드 연결 테스트
 export const testConnection = async () => {
   try {
