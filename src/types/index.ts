@@ -1,11 +1,4 @@
-// 사용자 관련 타입
-export interface User {
-  id: number;
-  loginId: string;
-  password?: string;
-  teamName: string;
-}
-
+// 백엔드 DTO와 일치하는 타입 정의
 export interface UserSignupRequest {
   loginId: string;
   password: string;
@@ -15,15 +8,6 @@ export interface UserSignupRequest {
 export interface UserLoginRequest {
   loginId: string;
   password: string;
-}
-
-export interface MatchSchedule {
-  gameType: string;
-  team1: string;
-  team2: string;
-  dateTime: string;
-  tournamentName: string;
-  status: string;
 }
 
 // 팀 목록 상수

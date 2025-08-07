@@ -1,40 +1,16 @@
 import { UserLoginRequest, UserSignupRequest } from '@/types';
 
 const API_BASE = 'https://esportscalender-nzpn.onrender.com';
-const MAX_RETRIES = 2;
-const RETRY_DELAY = 2000; // 2초
-
-// 재시도 로직을 포함한 fetch 함수
-const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok && retries > 0) {
-      // 500 에러나 네트워크 에러의 경우 재시도
-      if (response.status === 500 || response.status === 503 || response.status === 504) {
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        return fetchWithRetry(url, options, retries - 1);
-      }
-    }
-    return response;
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return fetchWithRetry(url, options, retries - 1);
-    }
-    throw error;
-  }
-};
 
 // ✅ 회원가입: loginId + password + teamName
 export const signup = async (loginId: string, password: string, teamName: string): Promise<string> => {
   try {
-    const request: UserSignupRequest = { loginId, password, teamName };
-    const response = await fetchWithRetry(`${API_BASE}/api/users/signup`, {
+    const response = await fetch(`${API_BASE}/api/users/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify({ loginId, password, teamName }),
     });
 
     if (!response.ok) {
@@ -54,13 +30,12 @@ export const signup = async (loginId: string, password: string, teamName: string
 // ✅ 로그인: loginId + password
 export const login = async (loginId: string, password: string): Promise<string> => {
   try {
-    const request: UserLoginRequest = { loginId, password };
-    const response = await fetchWithRetry(`${API_BASE}/api/users/login`, {
+    const response = await fetch(`${API_BASE}/api/users/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify({ loginId, password }),
     });
 
     if (!response.ok) {
@@ -77,70 +52,11 @@ export const login = async (loginId: string, password: string): Promise<string> 
   }
 };
 
-// 경기 일정 관련 API
-export const fetchMatches = async () => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE}/api/schedules/crawl`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    if (!response.ok) {
-      throw new Error('경기 일정을 불러오는데 실패했습니다.');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch matches:', error);
-    throw error;
-  }
-};
-
-// 경기 알림 설정
-export const subscribeToMatch = async (matchId: string, token: string) => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE}/api/matches/${matchId}/subscribe`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error('경기 알림 설정에 실패했습니다.');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to subscribe to match:', error);
-    throw error;
-  }
-};
-
-// 경기 알림 해제
-export const unsubscribeFromMatch = async (matchId: string, token: string) => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE}/api/matches/${matchId}/unsubscribe`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error('경기 알림 해제에 실패했습니다.');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to unsubscribe from match:', error);
-    throw error;
-  }
-};
-
 // 백엔드 연결 테스트
 export const testConnection = async () => {
   try {
     console.log('Attempting to connect to:', `${API_BASE}/api/users`);
-    const response = await fetchWithRetry(`${API_BASE}/api/users`, {
+    const response = await fetch(`${API_BASE}/api/users`, {
       method: 'GET',
     });
     
