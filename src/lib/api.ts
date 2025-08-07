@@ -1,4 +1,4 @@
-import { User, UserLoginRequest, UserSignupRequest } from '@/types';
+import { UserLoginRequest, UserSignupRequest } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const MAX_RETRIES = 2;
@@ -74,54 +74,6 @@ export const login = async (loginId: string, password: string): Promise<string> 
       throw new Error(error.message);
     }
     throw new Error('로그인 중 오류가 발생했습니다.');
-  }
-};
-
-// ✅ 전체 유저 조회
-export const getAllUsers = async (): Promise<User[]> => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE}/api/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || '사용자 목록을 불러오는데 실패했습니다.');
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error('사용자 목록 조회 중 오류가 발생했습니다.');
-  }
-};
-
-// ✅ 단일 유저 조회
-export const getUserById = async (id: number): Promise<User> => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE}/api/users/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || '사용자 정보를 불러오는데 실패했습니다.');
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error('사용자 정보 조회 중 오류가 발생했습니다.');
   }
 };
 
