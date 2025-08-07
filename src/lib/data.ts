@@ -1,12 +1,13 @@
 import { TeamName } from '@/types';
 
 interface Team {
-  id: TeamName;
+  id: TeamName | 'all';
   name: string;
   logo?: string;
 }
 
 export const teams: Team[] = [
+  { id: 'all', name: '전체' },
   { id: "T1", name: "T1" },
   { id: "GEN", name: "Gen.G" },
   { id: "KT", name: "KT Rolster" },
