@@ -7,7 +7,8 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
   const token = localStorage.getItem('token');
   
   try {
-    const response = await fetch(`${API_BASE}/api/matches`, {
+    console.log('Fetching matches with token:', token);
+    const response = await fetch(`${API_BASE}/api/match`, {  // /matches -> /match로 수정
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -16,10 +17,13 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to fetch matches:', response.status, errorText);
       throw new Error('경기 일정을 불러오는데 실패했습니다.');
     }
 
     const data = await response.json();
+    console.log('Fetched matches:', data);
     return data;
   } catch (error) {
     console.error('Failed to fetch matches:', error);
