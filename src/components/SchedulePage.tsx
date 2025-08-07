@@ -66,9 +66,14 @@ export default function SchedulePage() {
 
   // 필터링된 경기 목록
   const filteredMatches = matches.filter(match => {
-    const matchMonth = match.date.substring(0, 7); // YYYY-MM
+    const matchMonth = match.date.split('-').slice(0, 2).join('-'); // YYYY-MM
     const teamMatches = selectedTeam === 'all' || match.teamA === selectedTeam || match.teamB === selectedTeam;
     return matchMonth === currentMonth && teamMatches;
+  }).sort((a, b) => {
+    // 날짜순으로 정렬
+    const dateA = new Date(`${a.date} ${a.time}`);
+    const dateB = new Date(`${b.date} ${b.time}`);
+    return dateA.getTime() - dateB.getTime();
   });
 
   return (

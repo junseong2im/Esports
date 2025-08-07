@@ -1,7 +1,29 @@
 import { UserLoginRequest, UserSignupRequest, MatchSchedule } from '@/types';
-import { matches } from './mockData';
 
 const API_BASE = 'https://esportscalender-nzpn.onrender.com';
+
+// ✅ 경기 일정 조회
+export const fetchMatches = async (): Promise<MatchSchedule[]> => {
+  try {
+    const response = await fetch(`${API_BASE}/api/matches`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('경기 일정을 불러오는데 실패했습니다.');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch matches:', error);
+    throw error;
+  }
+};
 
 // ✅ 회원가입: loginId + password + teamName
 export const signup = async (loginId: string, password: string, teamName: string): Promise<string> => {
@@ -71,28 +93,5 @@ export const testConnection = async () => {
   } catch (error) {
     console.error('Backend connection test failed:', error);
     throw error;
-  }
-}; 
-
-// ✅ 경기 일정 조회
-export const fetchMatches = async (): Promise<MatchSchedule[]> => {
-  try {
-    const response = await fetch(`${API_BASE}/api/matches`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('경기 일정을 불러오는데 실패했습니다.');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch matches:', error);
-    // 임시로 목업 데이터 반환
-    return matches;
   }
 }; 

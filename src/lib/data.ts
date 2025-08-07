@@ -1,14 +1,22 @@
-export const teams = [
-  { id: 'all', name: '전체' },
-  { id: 'hanwha', name: 'Hanwha Life Esports' },
-  { id: 'geng', name: 'Gen.G' },
-  { id: 'dplus', name: 'Dplus KIA' },
-  { id: 'nongshim', name: 'Nongshim RedForce' },
-  { id: 'kt', name: 'kt Rolster' },
-  { id: 't1', name: 'T1' },
-  { id: 'drx', name: 'DRX' },
-  { id: 'brion', name: 'OKSavingsBank BRION' },
-  { id: 'fearx', name: 'BNK FEARX' }
+import { TeamName } from '@/types';
+
+interface Team {
+  id: TeamName;
+  name: string;
+  logo?: string;
+}
+
+export const teams: Team[] = [
+  { id: "T1", name: "T1" },
+  { id: "GEN", name: "Gen.G" },
+  { id: "KT", name: "KT Rolster" },
+  { id: "HLE", name: "Hanwha Life" },
+  { id: "DK", name: "Dplus KIA" },
+  { id: "KDF", name: "Kwangdong Freecs" },
+  { id: "LSB", name: "Liiv SANDBOX" },
+  { id: "NS", name: "NongShim RedForce" },
+  { id: "BRO", name: "OKSavingsBank BRION" },
+  { id: "DRX", name: "DRX" }
 ];
 
 export const matches = [
