@@ -25,6 +25,15 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_R
   }
 };
 
+// User 인터페이스 정의 (백엔드 User 엔티티와 매칭)
+export interface User {
+  id: number;
+  loginId: string;
+  password?: string; // 보안상 응답에서는 제외
+  teamName: string;
+  username?: string;
+}
+
 interface LoginResponse {
   token: string;
   message: string;
@@ -84,6 +93,54 @@ export const signup = async (loginId: string, password: string, teamName: string
   }
 };
 
+// ✅ 전체 유저 조회 (백엔드 컨트롤러와 매칭)
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    const response = await fetchWithRetry(`${API_BASE}/api/users`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || '사용자 목록을 불러오는데 실패했습니다.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('사용자 목록 조회 중 오류가 발생했습니다.');
+  }
+};
+
+// ✅ 단일 유저 조회 (백엔드 컨트롤러와 매칭)
+export const getUserById = async (id: number): Promise<User> => {
+  try {
+    const response = await fetchWithRetry(`${API_BASE}/api/users/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || '사용자 정보를 불러오는데 실패했습니다.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('사용자 정보 조회 중 오류가 발생했습니다.');
+  }
+};
+
 export const fetchMatches = async () => {
   try {
     const response = await fetchWithRetry(`${API_BASE}/api/schedules/crawl`, {
@@ -99,6 +156,8 @@ export const fetchMatches = async () => {
   }
 };
 
+// 추후 구현 예정
+/*
 export const subscribeToMatch = async (matchId: string, token: string) => {
   try {
     const response = await fetchWithRetry(`${API_BASE}/api/matches/${matchId}/subscribe`, {
@@ -136,9 +195,11 @@ export const unsubscribeFromMatch = async (matchId: string, token: string) => {
     throw error;
   }
 };
+*/
 
 export const testConnection = async () => {
   try {
+    console.log('Attempting to connect to:', `${API_BASE}/api/users`);  // URL 로깅 추가
     const response = await fetchWithRetry(`${API_BASE}/api/users`, {
       method: 'GET',
     });

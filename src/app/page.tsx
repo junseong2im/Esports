@@ -7,6 +7,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import PageTransition from '@/components/PageTransition';
 import Toast from '@/components/Toast';
 import { useNetwork } from '@/hooks/useNetwork';
+import DebugPanel from '@/components/DebugPanel';
 
 export default function Home() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function Home() {
     message: string;
     type: 'success' | 'error' | 'warning' | 'info';
   }>({ show: false, message: '', type: 'info' });
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   
   const { isOnline, isConnectionSlow } = useNetwork();
 
@@ -220,6 +222,21 @@ export default function Home() {
               opacity: 0.9,
               textShadow: '0 0 5px rgba(0,0,0,0.5)'
             }}>League of Legends Champions Korea</p>
+            <button
+              onClick={() => setShowDebugPanel(true)}
+              style={{
+                marginTop: '10px',
+                padding: '8px 16px',
+                backgroundColor: '#ff6b6b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              🔧 디버그 패널
+            </button>
           </div>
 
           {/* 로그인 폼 */}
@@ -584,6 +601,12 @@ export default function Home() {
               onClose={() => setToastConfig(prev => ({ ...prev, show: false }))}
           />
           )}
+
+          {/* 디버그 패널 */}
+          <DebugPanel 
+            isVisible={showDebugPanel} 
+            onClose={() => setShowDebugPanel(false)} 
+          />
 
           {/* 네트워크 상태 표시 (오프라인일 때) */}
           {!isOnline && (

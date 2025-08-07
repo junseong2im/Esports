@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { teams, matches } from '@/lib/data';
+import { useRouter } from 'next/navigation';
+import { fetchMatches, subscribeToMatch, unsubscribeFromMatch } from '@/lib/api';
+import { showToast } from '@/lib/toast';
 
 // 팀별 브랜드 색상 정의
 const teamColors: { [key: string]: string } = {
@@ -16,12 +19,53 @@ const teamColors: { [key: string]: string } = {
   fearx: '#1E3D6B',   // FEARX
 };
 
+interface Match {
+  id: string;
+  date: string;
+  time: string;
+  team1: {
+    id: string;
+    name: string;
+  };
+  team2: {
+    id: string;
+    name: string;
+  };
+}
+
 export default function Schedule() {
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [notifications, setNotifications] = useState<{ [key: string]: boolean }>({});
   const [currentMonth, setCurrentMonth] = useState('2024-03');
   const [isDiscordConnected, setIsDiscordConnected] = useState(false);
   const [activePopup, setActivePopup] = useState<string | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/');
+      return;
+    }
+
+    const fetchMatchData = async () => {
+      try {
+        const data = await fetchMatches();
+        setMatches(data);
+      } catch (error) {
+        setError('경기 일정을 불러오는데 실패했습니다.');
+        console.error('Error fetching matches:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMatchData();
+  }, [router]);
 
   // 팝업 내용 정의
   const popupContents = {
@@ -77,11 +121,33 @@ export default function Schedule() {
     return acc;
   }, {} as { [key: string]: typeof matches });
 
-  const toggleNotification = (matchId: string) => {
-    setNotifications(prev => ({
-      ...prev,
-      [matchId]: !prev[matchId]
-    }));
+  const toggleNotification = async (matchId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast('로그인이 필요한 서비스입니다.', 'error');
+      return;
+    }
+
+    try {
+      if (notifications[matchId]) {
+        await unsubscribeFromMatch(matchId, token);
+        showToast('알림이 해제되었습니다.', 'success');
+      } else {
+        await subscribeToMatch(matchId, token);
+        showToast('알림이 설정되었습니다.', 'success');
+      }
+      
+      setNotifications(prev => ({
+        ...prev,
+        [matchId]: !prev[matchId]
+      }));
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, 'error');
+      } else {
+        showToast('알림 설정 중 오류가 발생했습니다.', 'error');
+      }
+    }
   };
 
   const months = [
