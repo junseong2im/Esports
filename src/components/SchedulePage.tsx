@@ -3,11 +3,30 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
+import { fetchMatches } from '@/lib/api';
+import { MatchSchedule } from '@/types';
+import MatchCard from './MatchCard';
 
 export default function SchedulePage() {
   const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState('all');
-  const [currentMonth, setCurrentMonth] = useState('2024-03');
+  const [matches, setMatches] = useState<MatchSchedule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 경기 일정에서 월 목록 추출
+  const months = [...new Set(matches.map(match => {
+    const [year, month] = match.date.split('-');
+    return `${year}-${month}`;
+  }))].sort().map(yearMonth => {
+    const [year, month] = yearMonth.split('-');
+    return {
+      value: yearMonth,
+      label: `${parseInt(month)}월`
+    };
+  });
+
+  const [currentMonth, setCurrentMonth] = useState(months[0]?.value || '2024-03');
 
   useEffect(() => {
     // 로그인 체크
@@ -22,11 +41,35 @@ export default function SchedulePage() {
     checkAuth();
   }, [router]);
 
-  const months = [
-    { value: '2024-03', label: '3월' },
-    { value: '2024-04', label: '4월' },
-    { value: '2024-05', label: '5월' }
-  ];
+  useEffect(() => {
+    const loadMatches = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchMatches();
+        setMatches(data);
+        // 첫 번째 경기의 월을 현재 월로 설정
+        if (data.length > 0) {
+          const [year, month] = data[0].date.split('-');
+          setCurrentMonth(`${year}-${month}`);
+        }
+      } catch (err) {
+        setError('경기 일정을 불러오는데 실패했습니다.');
+        console.error('Failed to fetch matches:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMatches();
+  }, []);
+
+  // 필터링된 경기 목록
+  const filteredMatches = matches.filter(match => {
+    const matchMonth = match.date.substring(0, 7); // YYYY-MM
+    const teamMatches = selectedTeam === 'all' || match.teamA === selectedTeam || match.teamB === selectedTeam;
+    return matchMonth === currentMonth && teamMatches;
+  });
 
   return (
     <div style={{
@@ -104,13 +147,15 @@ export default function SchedulePage() {
                   setCurrentMonth(months[currentIndex - 1].value);
                 }
               }}
+              disabled={months.findIndex(m => m.value === currentMonth) === 0}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#333',
                 border: 'none',
                 borderRadius: '5px',
                 color: 'white',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                opacity: months.findIndex(m => m.value === currentMonth) === 0 ? 0.5 : 1
               }}
             >
               ◀
@@ -121,7 +166,7 @@ export default function SchedulePage() {
               fontWeight: 'bold',
               margin: 0
             }}>
-              {months.find(m => m.value === currentMonth)?.label} 경기 일정
+              {months.find(m => m.value === currentMonth)?.label || '경기 일정'} 경기 일정
             </h2>
             <button
               onClick={() => {
@@ -130,13 +175,15 @@ export default function SchedulePage() {
                   setCurrentMonth(months[currentIndex + 1].value);
                 }
               }}
+              disabled={months.findIndex(m => m.value === currentMonth) === months.length - 1}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#333',
                 border: 'none',
                 borderRadius: '5px',
                 color: 'white',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                opacity: months.findIndex(m => m.value === currentMonth) === months.length - 1 ? 0.5 : 1
               }}
             >
               ▶
@@ -235,16 +282,49 @@ export default function SchedulePage() {
       {/* 경기 일정 목록 */}
       <div style={{
         maxWidth: '1000px',
-        margin: '0 auto',
-        paddingTop: '1rem'
+        margin: '2rem auto',
+        padding: '0 1rem'
       }}>
-        <div style={{
-          color: '#888',
-          textAlign: 'center',
-          padding: '2rem'
-        }}>
-          백엔드 API 연동 후 경기 일정이 표시됩니다.
-        </div>
+        {isLoading ? (
+          <div style={{
+            color: '#888',
+            textAlign: 'center',
+            padding: '2rem'
+          }}>
+            경기 일정을 불러오는 중...
+          </div>
+        ) : error ? (
+          <div style={{
+            color: '#ff4444',
+            textAlign: 'center',
+            padding: '2rem',
+            backgroundColor: 'rgba(255, 68, 68, 0.1)',
+            borderRadius: '10px'
+          }}>
+            {error}
+          </div>
+        ) : filteredMatches.length === 0 ? (
+          <div style={{
+            color: '#888',
+            textAlign: 'center',
+            padding: '2rem',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '10px'
+          }}>
+            표시할 경기 일정이 없습니다.
+          </div>
+        ) : (
+          filteredMatches.map(match => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              onNotificationToggle={(matchId) => {
+                // TODO: 알림 토글 구현
+                console.log('Toggle notification for match:', matchId);
+              }}
+            />
+          ))
+        )}
       </div>
     </div>
   );
