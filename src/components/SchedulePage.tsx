@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
 import { fetchMatches } from '@/lib/api';
-import { MatchSchedule } from '@/types';
+import { MatchSchedule, TeamName } from '@/types';
 import MatchCard from './MatchCard';
+
+type SelectedTeam = TeamName | 'all';
 
 export default function SchedulePage() {
   const router = useRouter();
-  const [selectedTeam, setSelectedTeam] = useState('all');
+  const [selectedTeam, setSelectedTeam] = useState<SelectedTeam>('all');
   const [matches, setMatches] = useState<MatchSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
