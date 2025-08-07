@@ -20,7 +20,7 @@ export default function MatchCard({ match }: MatchCardProps) {
       gap: '1rem'
     }}>
       <div style={{ flex: 1, textAlign: 'center' }}>
-        <span style={{ color: '#ffffff', fontSize: '1.1rem' }}>{match.team1}</span>
+        <span style={{ color: '#ffffff', fontSize: '1.1rem' }}>{match.teamA}</span>
       </div>
 
       <div style={{ 
