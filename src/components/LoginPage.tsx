@@ -106,14 +106,11 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         const response = await login(loginId, password);
-        // 토큰을 직접 저장 (response가 토큰 문자열임)
-        if (response) {
-          localStorage.setItem('token', response);
-          showToast('로그인 성공!', 'success');
-          setTimeout(() => router.push('/schedule'), 1000);
-        } else {
-          showToast('로그인에 실패했습니다.', 'error');
-        }
+        // 토큰 형식 수정
+        const token = btoa(`${loginId}:${password}`);  // Base64 인코딩
+        localStorage.setItem('token', token);
+        showToast('로그인 성공!', 'success');
+        setTimeout(() => router.push('/schedule'), 1000);
       } else {
         const response = await signup(loginId, password, selectedTeam);
         showToast('회원가입이 완료되었습니다!', 'success');
