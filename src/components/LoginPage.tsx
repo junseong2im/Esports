@@ -106,16 +106,13 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         const response = await login(loginId, password);
-        if (response.includes('성공')) {
-          // 로그인 성공 시 토큰을 localStorage에 저장
-          const token = response.split('|')[1]; // 예: "로그인 성공|eyJhbGciOiJ..."
-          if (token) {
-            localStorage.setItem('token', token);
-          }
+        // 토큰을 직접 저장 (response가 토큰 문자열임)
+        if (response) {
+          localStorage.setItem('token', response);
           showToast('로그인 성공!', 'success');
           setTimeout(() => router.push('/schedule'), 1000);
         } else {
-          showToast(response, 'error');
+          showToast('로그인에 실패했습니다.', 'error');
         }
       } else {
         const response = await signup(loginId, password, selectedTeam);
@@ -162,9 +159,11 @@ export default function LoginPage() {
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: '100vw',
-              height: '100vh',
-              transform: 'translate(-50%, -50%) scale(1.1)',
+              width: '177.77777778vh', /* 16:9 비율 */
+              height: '56.25vw',  /* 16:9 비율 */
+              minWidth: '100%',
+              minHeight: '100%',
+              transform: 'translate(-50%, -50%)',
               border: 'none',
               objectFit: 'cover',
               pointerEvents: 'none',

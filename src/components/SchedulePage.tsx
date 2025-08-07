@@ -11,11 +11,15 @@ export default function SchedulePage() {
 
   useEffect(() => {
     // 로그인 체크
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/');
-      return;
-    }
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.replace('/');
+        return;
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   const months = [
