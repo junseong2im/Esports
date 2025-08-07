@@ -107,6 +107,11 @@ export default function LoginPage() {
       if (isLogin) {
         const response = await login(loginId, password);
         if (response.includes('성공')) {
+          // 로그인 성공 시 토큰을 localStorage에 저장
+          const token = response.split('|')[1]; // 예: "로그인 성공|eyJhbGciOiJ..."
+          if (token) {
+            localStorage.setItem('token', token);
+          }
           showToast('로그인 성공!', 'success');
           setTimeout(() => router.push('/schedule'), 1000);
         } else {
