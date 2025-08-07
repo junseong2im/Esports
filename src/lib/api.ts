@@ -6,7 +6,7 @@ const API_BASE = 'https://esportscalender-nzpn.onrender.com';
 export const fetchMatches = async (): Promise<MatchSchedule[]> => {
   try {
     console.log('Fetching matches...');
-    const response = await fetch(`${API_BASE}/api/matches/list`, {
+    const response = await fetch(`${API_BASE}/api/match/list`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
