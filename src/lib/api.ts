@@ -4,12 +4,14 @@ const API_BASE = 'https://esportscalender-nzpn.onrender.com';
 
 // ✅ 경기 일정 조회
 export const fetchMatches = async (): Promise<MatchSchedule[]> => {
+  const token = localStorage.getItem('token');
+  
   try {
     const response = await fetch(`${API_BASE}/api/matches`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       }
     });
 

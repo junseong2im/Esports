@@ -32,15 +32,13 @@ export default function SchedulePage() {
 
   useEffect(() => {
     // 로그인 체크
-    const checkAuth = () => {
+    if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       if (!token) {
         router.replace('/');
         return;
       }
-    };
-
-    checkAuth();
+    }
   }, [router]);
 
   useEffect(() => {
@@ -63,7 +61,9 @@ export default function SchedulePage() {
       }
     };
 
-    loadMatches();
+    if (typeof window !== 'undefined') {
+      loadMatches();
+    }
   }, []);
 
   // 필터링된 경기 목록
