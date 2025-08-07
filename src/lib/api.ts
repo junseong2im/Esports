@@ -1,6 +1,6 @@
 import { UserLoginRequest, UserSignupRequest } from '@/types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE = 'https://esportscalender-nzpn.onrender.com';
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 2000; // 2초
 
