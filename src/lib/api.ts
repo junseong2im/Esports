@@ -77,7 +77,7 @@ export const testConnection = async () => {
 export const fetchMatches = async (): Promise<MatchSchedule[]> => {
   try {
     console.log('Fetching matches...');
-    const response = await fetch(`${API_BASE}/api/schedules/crawl`, {
+    const response = await fetch(`${API_BASE}/api/schedules/list`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
