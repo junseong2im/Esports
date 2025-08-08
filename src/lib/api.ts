@@ -21,7 +21,7 @@ export const signup = async (loginId: string, password: string, teamName: string
     return await response.text();
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(error);
+      throw new Error(error.message);
     }
     throw new Error('회원가입 중 오류가 발생했습니다.');
   }
@@ -46,7 +46,7 @@ export const login = async (loginId: string, password: string): Promise<string> 
     return await response.text();
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(error);
+      throw new Error(error.message);
     }
     throw new Error('로그인 중 오류가 발생했습니다.');
   }
