@@ -2,32 +2,6 @@ import { UserLoginRequest, UserSignupRequest, MatchSchedule } from '@/types';
 
 const API_BASE = 'https://esportscalender-nzpn.onrender.com';
 
-// ✅ 경기 일정 조회
-export const fetchMatches = async (): Promise<MatchSchedule[]> => {
-  try {
-    console.log('Fetching matches...');
-    const response = await fetch(`${API_BASE}/api/match/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to fetch matches:', response.status, errorText);
-      throw new Error('경기 일정을 불러오는데 실패했습니다.');
-    }
-
-    const data = await response.json();
-    console.log('Raw API response:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to fetch matches:', error);
-    throw error;
-  }
-};
-
 // ✅ 회원가입: loginId + password + teamName
 export const signup = async (loginId: string, password: string, teamName: string): Promise<string> => {
   try {
@@ -47,7 +21,7 @@ export const signup = async (loginId: string, password: string, teamName: string
     return await response.text();
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
     throw new Error('회원가입 중 오류가 발생했습니다.');
   }
@@ -72,7 +46,7 @@ export const login = async (loginId: string, password: string): Promise<string> 
     return await response.text();
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
     throw new Error('로그인 중 오류가 발생했습니다.');
   }
@@ -85,16 +59,42 @@ export const testConnection = async () => {
     const response = await fetch(`${API_BASE}/api/users`, {
       method: 'GET',
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.text();
     console.log('Backend connection test:', data);
     return data;
   } catch (error) {
     console.error('Backend connection test failed:', error);
+    throw error;
+  }
+};
+
+// ✅ 경기 일정 조회
+export const fetchMatches = async (): Promise<MatchSchedule[]> => {
+  try {
+    console.log('Fetching matches...');
+    const response = await fetch(`${API_BASE}/api/schedules/crawl`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to fetch matches:', response.status, errorText);
+      throw new Error('경기 일정을 불러오는데 실패했습니다.');
+    }
+
+    const data = await response.json();
+    console.log('Raw API response:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch matches:', error);
     throw error;
   }
 }; 
