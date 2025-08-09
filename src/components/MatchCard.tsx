@@ -7,73 +7,46 @@ interface MatchCardProps {
 }
 
 export default function MatchCard({ match }: MatchCardProps) {
-  // 날짜/시간 포맷팅
-  const formatDateTime = (isoString: string) => {
-    const date = new Date(isoString);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${month}월 ${day}일 ${hours}:${minutes}`;
+  // 날짜와 시간 포맷팅
+  const formatDateTime = (dateTimeStr: string) => {
+    const dateTime = new Date(dateTimeStr);
+    const date = dateTime.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+    const time = dateTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return { date, time };
   };
 
+  const { date, time } = formatDateTime(match.matchDate);
+
   return (
-    <div style={{
-      backgroundColor: '#1a1a1a',
-      borderRadius: '10px',
-      padding: '1.5rem',
-      marginBottom: '1rem',
-      color: 'white',
-      position: 'relative'
-    }}>
-      {/* 경기 시간 */}
-      <div style={{
-        fontSize: '1.1rem',
-        color: '#888',
-        marginBottom: '1rem'
-      }}>
-        {formatDateTime(match.matchDate)}
+    <div
+      className="relative flex items-center justify-between p-4 mb-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:transform hover:scale-[1.02]"
+      style={{
+        background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}
+    >
+      {/* Team A */}
+      <div className="flex-1 text-center">
+        <span className="text-white font-bold">{match.teamA}</span>
       </div>
 
-      {/* 팀 매치업 */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1rem',
-        fontSize: '1.5rem',
-        fontWeight: 'bold'
-      }}>
-        <span>{match.teamA}</span>
-        <span style={{ color: '#666' }}>vs</span>
-        <span>{match.teamB}</span>
+      {/* Match Info */}
+      <div className="flex-1 text-center">
+        <div className="text-sm text-gray-400">{date}</div>
+        <div className="font-bold my-1 text-white">{match.matchStatus || 'VS'}</div>
+        <div className="text-sm text-gray-400">{time}</div>
       </div>
 
-      {/* 리그/토너먼트 정보 */}
-      <div style={{
-        marginTop: '1rem',
-        fontSize: '0.9rem',
-        color: '#666',
-        textAlign: 'center'
-      }}>
+      {/* Team B */}
+      <div className="flex-1 text-center">
+        <span className="text-white font-bold">{match.teamB}</span>
+      </div>
+
+      {/* League Name */}
+      <div className="absolute top-2 right-2 text-xs text-gray-500">
         {match.leagueName}
       </div>
-
-      {/* 경기 상태 */}
-      {match.matchStatus && (
-        <div style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          backgroundColor: '#333',
-          padding: '0.5rem 1rem',
-          borderRadius: '5px',
-          fontSize: '0.9rem',
-          color: '#aaa'
-        }}>
-          {match.matchStatus}
-        </div>
-      )}
     </div>
   );
 } 
