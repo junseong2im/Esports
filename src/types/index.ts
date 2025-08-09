@@ -3,23 +3,24 @@ export type TeamName = 'T1' | 'GEN' | 'KT' | 'HLE' | 'DK' | 'KDF' | 'LSB' | 'NS'
 
 export const VALID_TEAMS: TeamName[] = ['T1', 'GEN', 'KT', 'HLE', 'DK', 'KDF', 'LSB', 'NS', 'BRO', 'DRX'];
 
-export interface UserLoginRequest {
-  loginId: string;
-  password: string;
-}
-
 export interface UserSignupRequest {
   loginId: string;
   password: string;
   teamName: TeamName;
 }
 
+export interface UserLoginRequest {
+  loginId: string;
+  password: string;
+}
+
+// 백엔드 도메인에 맞춘 경기 일정 타입
 export interface MatchSchedule {
   id: number;
-  date: string;
-  time: string;
-  teamA: TeamName;
-  teamB: TeamName;
-  score?: string;
-  isNotificationEnabled?: boolean;
+  gameName: string;      // 예: "LOL"
+  teamA: string;
+  teamB: string;
+  matchDate: string;     // ISO 또는 yyyy-MM-dd HH:mm[:ss]
+  leagueName: string;    // 토너먼트/리그명
+  matchStatus: string;   // 상태 또는 승자 정보
 } 

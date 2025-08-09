@@ -1,176 +1,78 @@
 'use client';
 
-import { useState } from 'react';
 import { MatchSchedule } from '@/types';
-import { teams } from '@/lib/data';
 
 interface MatchCardProps {
   match: MatchSchedule;
-  onNotificationToggle?: (matchId: number) => void;
 }
 
-export default function MatchCard({ match, onNotificationToggle }: MatchCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  const getTeamName = (teamId: string) => {
-    return teams.find(team => team.id === teamId)?.name || teamId;
+export default function MatchCard({ match }: MatchCardProps) {
+  // 날짜/시간 포맷팅
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${month}월 ${day}일 ${hours}:${minutes}`;
   };
 
   return (
-    <div 
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        backgroundColor: isHovered ? 'rgba(74, 85, 104, 0.2)' : 'rgba(26, 32, 44, 0.4)',
-        backdropFilter: 'blur(10px)',
-        padding: '1.5rem',
-        borderRadius: '15px',
-        marginBottom: '1rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '2rem',
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: isHovered ? '0 8px 16px rgba(0, 0, 0, 0.2)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
-        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
-      }}
-    >
-      {/* 팀 A */}
+    <div style={{
+      backgroundColor: '#1a1a1a',
+      borderRadius: '10px',
+      padding: '1.5rem',
+      marginBottom: '1rem',
+      color: 'white',
+      position: 'relative'
+    }}>
+      {/* 경기 시간 */}
       <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.5rem'
+        fontSize: '1.1rem',
+        color: '#888',
+        marginBottom: '1rem'
       }}>
-        <div style={{
-          width: '60px',
-          height: '60px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '0.5rem'
-        }}>
-          {/* 팀 로고 들어갈 자리 */}
-        </div>
-        <span style={{
-          color: '#ffffff',
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-          textAlign: 'center'
-        }}>
-          {getTeamName(match.teamA)}
-        </span>
+        {formatDateTime(match.matchDate)}
       </div>
 
-      {/* 경기 정보 */}
+      {/* 팀 매치업 */}
       <div style={{
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        gap: '0.5rem',
-        minWidth: '200px'
+        justifyContent: 'center',
+        gap: '1rem',
+        fontSize: '1.5rem',
+        fontWeight: 'bold'
       }}>
+        <span>{match.teamA}</span>
+        <span style={{ color: '#666' }}>vs</span>
+        <span>{match.teamB}</span>
+      </div>
+
+      {/* 리그/토너먼트 정보 */}
+      <div style={{
+        marginTop: '1rem',
+        fontSize: '0.9rem',
+        color: '#666',
+        textAlign: 'center'
+      }}>
+        {match.leagueName}
+      </div>
+
+      {/* 경기 상태 */}
+      {match.matchStatus && (
         <div style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          backgroundColor: '#333',
           padding: '0.5rem 1rem',
-          borderRadius: '8px',
-          color: '#A0AEC0',
+          borderRadius: '5px',
           fontSize: '0.9rem',
-          letterSpacing: '0.5px'
+          color: '#aaa'
         }}>
-          {match.date}
+          {match.matchStatus}
         </div>
-        <div style={{
-          fontSize: '2rem',
-          fontWeight: 'bold',
-          color: '#E2E8F0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
-          {match.score || 'VS'}
-        </div>
-        <div style={{
-          backgroundColor: 'rgba(66, 153, 225, 0.1)',
-          padding: '0.5rem 1rem',
-          borderRadius: '8px',
-          color: '#4299E1',
-          fontSize: '0.9rem',
-          letterSpacing: '0.5px'
-        }}>
-          {match.time}
-        </div>
-      </div>
-
-      {/* 팀 B */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.5rem'
-      }}>
-        <div style={{
-          width: '60px',
-          height: '60px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '0.5rem'
-        }}>
-          {/* 팀 로고 들어갈 자리 */}
-        </div>
-        <span style={{
-          color: '#ffffff',
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-          textAlign: 'center'
-        }}>
-          {getTeamName(match.teamB)}
-        </span>
-      </div>
-
-      {/* 알림 버튼 */}
-      {onNotificationToggle && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onNotificationToggle(match.id);
-          }}
-          style={{
-            backgroundColor: match.isNotificationEnabled ? 'rgba(66, 153, 225, 0.2)' : 'transparent',
-            border: `2px solid ${match.isNotificationEnabled ? '#4299E1' : 'rgba(113, 128, 150, 0.4)'}`,
-            color: match.isNotificationEnabled ? '#4299E1' : '#718096',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            outline: 'none',
-            fontSize: '0.9rem',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          {match.isNotificationEnabled ? (
-            <>
-              <span>🔔</span>
-              알림 켜짐
-            </>
-          ) : (
-            <>
-              <span>🔕</span>
-              알림 받기
-            </>
-          )}
-        </button>
       )}
     </div>
   );

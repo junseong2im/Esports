@@ -73,11 +73,37 @@ export const testConnection = async () => {
   }
 };
 
-// ✅ 경기 일정 조회
-export const fetchMatches = async (): Promise<MatchSchedule[]> => {
+// ✅ 경기 일정 수동 크롤링 실행 (POST /api/schedules/crawl)
+export const crawlMatches = async (startDate: string, endDate: string): Promise<string> => {
   try {
-    console.log('Fetching matches...');
-    const response = await fetch(`${API_BASE}/api/schedules/list`, {
+    const params = new URLSearchParams({ startDate, endDate });
+    const response = await fetch(`${API_BASE}/api/schedules/crawl?${params.toString()}`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || '크롤링에 실패했습니다.');
+    }
+
+    return await response.text();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('크롤링 중 오류가 발생했습니다.');
+  }
+};
+
+// ✅ 경기 일정 조회 (GET /api/schedules?from=...&to=...)
+export const fetchMatches = async (from?: string, to?: string): Promise<MatchSchedule[]> => {
+  try {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+
+    const url = `${API_BASE}/api/schedules${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -92,7 +118,7 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
 
     const data = await response.json();
     console.log('Raw API response:', data);
-    return data;
+    return data as MatchSchedule[];
   } catch (error) {
     console.error('Failed to fetch matches:', error);
     throw error;
