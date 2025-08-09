@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
 import { fetchMatches, crawlMatches } from '@/lib/api';
 import { MatchSchedule, TeamName } from '@/types';
+import { showToast } from '@/lib/toast';
 import MatchCard from './MatchCard';
 
 type SelectedTeam = TeamName | 'all';
