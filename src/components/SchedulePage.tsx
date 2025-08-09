@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
-import { fetchMatches, crawlMatches } from '@/lib/api';
+import { fetchMatches } from '@/lib/api';
 import { MatchSchedule, TeamName } from '@/types';
 import MatchCard from './MatchCard';
 
@@ -15,7 +15,6 @@ export default function SchedulePage() {
   const [matches, setMatches] = useState<MatchSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCrawling, setIsCrawling] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -26,36 +25,6 @@ export default function SchedulePage() {
       }
     }
   }, [router]);
-
-  // LCK 2025 크롤링 실행 함수
-  const handleCrawlLCK = async () => {
-    try {
-      setIsCrawling(true);
-      setError(null);
-      
-      // LCK 2025 스프링 시즌 크롤링 (1월 ~ 3월)
-      const springResult = await crawlMatches('2025-01-01', '2025-03-31');
-      console.log('LCK 스프링 크롤링 결과:', springResult);
-      
-      // LCK 2025 서머 시즌 크롤링 (6월 ~ 8월)
-      const summerResult = await crawlMatches('2025-06-01', '2025-08-31');
-      console.log('LCK 서머 크롤링 결과:', summerResult);
-      
-      // 크롤링 후 일정 새로고침
-      const data = await fetchMatches();
-      // CL 리그 제외하고 LCK 일정만 필터링
-      const lckMatches = data.filter(match => 
-        match.leagueName.includes('LCK') && 
-        !match.leagueName.toLowerCase().includes('cl')
-      );
-      setMatches(lckMatches);
-    } catch (err) {
-      setError('크롤링 중 오류가 발생했습니다.');
-      console.error('크롤링 실패:', err);
-    } finally {
-      setIsCrawling(false);
-    }
-  };
 
   useEffect(() => {
     const loadMatches = async () => {
@@ -101,27 +70,6 @@ export default function SchedulePage() {
     <div style={{ minHeight: '100vh', backgroundColor: 'black', padding: '2rem', position: 'relative' }}>
       {/* 상단 컨트롤 */}
       <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'black', paddingBottom: '1rem', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* 크롤링 버튼 */}
-        <div style={{ backgroundColor: '#1a1a1a', padding: '1rem', borderRadius: '10px', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
-          <button 
-            onClick={handleCrawlLCK}
-            disabled={isCrawling}
-            style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: isCrawling ? '#666' : '#4A5568',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: isCrawling ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              transition: 'all 0.2s'
-            }}
-          >
-            {isCrawling ? '크롤링 중...' : 'LCK 2025 시즌 일정 가져오기'}
-          </button>
-        </div>
-
         {/* 월 선택 */}
         <div style={{ backgroundColor: '#1a1a1a', padding: '1rem', borderRadius: '10px', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', alignItems: 'center' }}>
