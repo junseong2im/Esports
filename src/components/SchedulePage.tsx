@@ -38,16 +38,21 @@ export default function SchedulePage() {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await fetchMatches();
-        // CL 리그 제외하고 LCK 일정만 필터링
-        const lckMatches = data.filter(match => 
-          match.leagueName.includes('LCK') && 
-          !match.leagueName.toLowerCase().includes('cl')
+        
+        // 먼저 2025년 전체 일정 크롤링
+        await crawlMatches();
+        
+        // 크롤링된 데이터 가져오기
+        const allMatches = await fetchMatches();
+        // LCK 리그만 필터링하고 CL 리그는 제외
+        const lckMatches = allMatches.filter(match => 
+          match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
         );
         setMatches(lckMatches);
-      } catch (err) {
+      } catch (error) {
         setError('경기 일정을 불러오는데 실패했습니다.');
-        console.error('Failed to fetch matches:', err);
+        console.error('Failed to fetch matches:', error);
+        showToast('경기 일정을 불러오는데 실패했습니다.', 'error');
       } finally {
         setIsLoading(false);
       }

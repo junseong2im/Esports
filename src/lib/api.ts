@@ -73,17 +73,37 @@ export const testConnection = async () => {
   }
 };
 
-// ✅ 경기 일정 수동 크롤링 실행 (POST /api/schedules/crawl)
-export const crawlMatches = async (startDate: string, endDate: string): Promise<string> => {
+// ✅ 경기 일정 조회 (GET /api/schedules?from=...&to=...)
+export const fetchMatches = async (): Promise<MatchSchedule[]> => {
   try {
-    const params = new URLSearchParams({ startDate, endDate });
-    const response = await fetch(`${API_BASE}/api/schedules/crawl?${params.toString()}`, {
+    const response = await fetch(`${API_BASE}/api/schedules`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch matches');
+    }
+    const matches = await response.json();
+    return matches;
+  } catch (error) {
+    console.error('Failed to fetch matches:', error);
+    throw error;
+  }
+};
+
+// ✅ 2025 LCK 전체 시즌 크롤링
+export const crawlMatches = async (): Promise<string> => {
+  try {
+    const response = await fetch(`${API_BASE}/api/schedules/crawl`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        startDate: '2025-01-01',
+        endDate: '2025-12-31'
+      })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || '크롤링에 실패했습니다.');
+      throw new Error('크롤링에 실패했습니다.');
     }
 
     return await response.text();
@@ -92,35 +112,5 @@ export const crawlMatches = async (startDate: string, endDate: string): Promise<
       throw new Error(error.message);
     }
     throw new Error('크롤링 중 오류가 발생했습니다.');
-  }
-};
-
-// ✅ 경기 일정 조회 (GET /api/schedules?from=...&to=...)
-export const fetchMatches = async (from?: string, to?: string): Promise<MatchSchedule[]> => {
-  try {
-    const params = new URLSearchParams();
-    if (from) params.append('from', from);
-    if (to) params.append('to', to);
-
-    const url = `${API_BASE}/api/schedules${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to fetch matches:', response.status, errorText);
-      throw new Error('경기 일정을 불러오는데 실패했습니다.');
-    }
-
-    const data = await response.json();
-    console.log('Raw API response:', data);
-    return data as MatchSchedule[];
-  } catch (error) {
-    console.error('Failed to fetch matches:', error);
-    throw error;
   }
 }; 
