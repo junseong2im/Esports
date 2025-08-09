@@ -73,44 +73,132 @@ export const testConnection = async () => {
   }
 };
 
-// ✅ 경기 일정 조회 (GET /api/schedules?from=...&to=...)
+// ✅ 경기 일정 조회
 export const fetchMatches = async (): Promise<MatchSchedule[]> => {
   try {
-    const response = await fetch(`${API_BASE}/api/schedules`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch matches');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
+
+    const response = await fetch(`${API_BASE}/api/schedules`, {
+      headers: {
+        'Authorization': `Basic ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(errorText || '경기 일정을 불러오는데 실패했습니다.');
+    }
+
     const matches = await response.json();
     return matches;
   } catch (error) {
     console.error('Failed to fetch matches:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('경기 일정을 불러오는데 실패했습니다.');
   }
 };
 
 // ✅ 2025 LCK 전체 시즌 크롤링
 export const crawlMatches = async (): Promise<string> => {
   try {
-    const response = await fetch(`${API_BASE}/api/schedules/crawl`, {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
+    }
+
+    // 현재 연도의 전체 일정을 크롤링
+    const now = new Date();
+    const year = now.getFullYear();
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const response = await fetch(`${API_BASE}/api/schedules/crawl?startDate=${startDate}&endDate=${endDate}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        startDate: '2025-01-01',
-        endDate: '2025-12-31'
-      })
+        'Authorization': `Basic ${token}`
+      }
     });
 
     if (!response.ok) {
-      throw new Error('크롤링에 실패했습니다.');
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(errorText || '크롤링에 실패했습니다.');
     }
 
     return await response.text();
   } catch (error) {
+    console.error('Failed to crawl matches:', error);
     if (error instanceof Error) {
       throw new Error(error.message);
     }
     throw new Error('크롤링 중 오류가 발생했습니다.');
+  }
+};
+
+// ✅ 팀별 경기 일정 조회
+export const fetchTeamMatches = async (team: string): Promise<MatchSchedule[]> => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
+    }
+
+    const response = await fetch(`${API_BASE}/api/schedules/team/${encodeURIComponent(team)}`, {
+      headers: {
+        'Authorization': `Basic ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(errorText || '팀 경기 일정을 불러오는데 실패했습니다.');
+    }
+
+    const matches = await response.json();
+    return matches;
+  } catch (error) {
+    console.error('Failed to fetch team matches:', error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('팀 경기 일정을 불러오는데 실패했습니다.');
+  }
+};
+
+// ✅ 다가오는 경기 조회
+export const fetchUpcomingMatches = async (count: number = 5): Promise<MatchSchedule[]> => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
+    }
+
+    const response = await fetch(`${API_BASE}/api/schedules/upcoming?n=${count}`, {
+      headers: {
+        'Authorization': `Basic ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(errorText || '다가오는 경기 일정을 불러오는데 실패했습니다.');
+    }
+
+    const matches = await response.json();
+    return matches;
+  } catch (error) {
+    console.error('Failed to fetch upcoming matches:', error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('다가오는 경기 일정을 불러오는데 실패했습니다.');
   }
 }; 

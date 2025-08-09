@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
-import { fetchMatches, crawlMatches } from '@/lib/api';
+import { fetchMatches, crawlMatches, fetchTeamMatches } from '@/lib/api';
 import { MatchSchedule, TeamName } from '@/types';
 import { showToast } from '@/lib/toast';
 import MatchCard from './MatchCard';
@@ -63,6 +63,34 @@ export default function SchedulePage() {
       loadMatches();
     }
   }, []);
+
+  // 팀 선택 시 해당 팀의 경기만 보여주기
+  const handleTeamSelect = async (team: SelectedTeam) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setSelectedTeam(team);
+
+      let filteredMatches;
+      if (team === 'all') {
+        // 전체 경기 가져오기
+        const allMatches = await fetchMatches();
+        filteredMatches = allMatches.filter(match => 
+          match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
+        );
+      } else {
+        // 선택된 팀의 경기만 가져오기
+        filteredMatches = await fetchTeamMatches(team);
+      }
+      setMatches(filteredMatches);
+    } catch (error) {
+      setError('경기 일정을 불러오는데 실패했습니다.');
+      console.error('Failed to fetch matches:', error);
+      showToast('경기 일정을 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 필터링된 경기 목록 (백엔드 필드 기준)
   const filteredMatches = matches
@@ -410,7 +438,7 @@ export default function SchedulePage() {
             }}>
               {/* 전체 버튼 */}
               <button
-                onClick={() => setSelectedTeam('all')}
+                onClick={() => handleTeamSelect('all')}
                 style={{
                   padding: '0.75rem 1rem',
                   backgroundColor: selectedTeam === 'all' ? '#4A5568' : '#333',
@@ -444,7 +472,7 @@ export default function SchedulePage() {
               {teams.filter(team => team.id !== 'all').map(team => (
                 <button
                   key={team.id}
-                  onClick={() => setSelectedTeam(team.id as TeamName)}
+                  onClick={() => handleTeamSelect(team.id as TeamName)}
                   style={{
                     padding: '0.75rem 1rem',
                     backgroundColor: selectedTeam === team.id ? '#4A5568' : '#333',
