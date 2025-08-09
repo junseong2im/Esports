@@ -15,6 +15,13 @@ export default function SchedulePage() {
   const [matches, setMatches] = useState<MatchSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
+
+  // 디스코드 연동 핸들러
+  const handleDiscordConnect = () => {
+    // TODO: 실제 디스코드 연동 로직 구현
+    window.open('https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=0&scope=bot', '_blank');
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -99,6 +106,80 @@ export default function SchedulePage() {
             League of Legends Champions Korea
           </p>
         </div>
+
+        {/* 디스코드 연동 버튼 */}
+        <button
+          onClick={handleDiscordConnect}
+          style={{
+            backgroundColor: '#7289DA',
+            color: 'white',
+            padding: '0.75rem 2rem',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(114, 137, 218, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4C14.89 4.23 14.76 4.57 14.67 4.85C13.06 4.61 11.47 4.61 9.88 4.85C9.79 4.57 9.66 4.23 9.54 4C8.04 4.26 6.6 4.71 5.27 5.33C1.81 10.37 0.87 15.29 1.34 20.13C3.14 21.49 4.89 22.31 6.61 22.88C7.04 22.28 7.42 21.65 7.75 20.98C7.13 20.76 6.54 20.49 5.97 20.16C6.09 20.07 6.21 19.98 6.32 19.89C10.19 21.64 14.43 21.64 18.24 19.89C18.36 19.98 18.47 20.07 18.59 20.16C18.02 20.49 17.43 20.76 16.81 20.98C17.14 21.65 17.52 22.28 17.95 22.88C19.67 22.31 21.42 21.49 23.22 20.13C23.77 14.52 22.33 9.64 19.27 5.33ZM8.57 17.23C7.47 17.23 6.56 16.19 6.56 14.91C6.56 13.63 7.45 12.59 8.57 12.59C9.69 12.59 10.6 13.63 10.58 14.91C10.58 16.19 9.69 17.23 8.57 17.23ZM15.99 17.23C14.89 17.23 13.98 16.19 13.98 14.91C13.98 13.63 14.87 12.59 15.99 12.59C17.11 12.59 18.02 13.63 18 14.91C18 16.19 17.11 17.23 15.99 17.23Z" fill="currentColor"/>
+          </svg>
+          디스코드 알림 받기
+        </button>
+
+        {/* 가이드라인 버튼 */}
+        <button
+          onClick={() => setShowGuide(!showGuide)}
+          style={{
+            backgroundColor: 'transparent',
+            color: '#888',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            padding: '0.5rem',
+            textDecoration: 'underline'
+          }}
+        >
+          {showGuide ? '가이드라인 닫기' : '가이드라인 보기'}
+        </button>
+
+        {/* 가이드라인 내용 */}
+        {showGuide && (
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            color: '#888',
+            fontSize: '0.9rem',
+            lineHeight: '1.6',
+            maxWidth: '800px',
+            margin: '1rem 0'
+          }}>
+            <h3 style={{ color: 'white', marginBottom: '1rem' }}>LCK 경기 알림 받는 방법</h3>
+            <ol style={{ paddingLeft: '1.5rem' }}>
+              <li>위의 &quot;디스코드 알림 받기&quot; 버튼을 클릭합니다.</li>
+              <li>디스코드 봇을 서버에 초대합니다.</li>
+              <li>원하는 채널에서 !알림설정 명령어를 입력합니다.</li>
+              <li>경기 시작 30분 전에 자동으로 알림을 받을 수 있습니다.</li>
+            </ol>
+            <p style={{ marginTop: '1rem', color: '#666' }}>
+              * 알림을 받고 싶지 않으시다면 !알림해제 명령어를 입력하세요.
+            </p>
+          </div>
+        )}
+
         <div style={{
           width: '100%',
           height: '1px',

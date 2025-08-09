@@ -34,7 +34,7 @@ export default function MatchCard({ match }: MatchCardProps) {
       {/* Match Info */}
       <div className="flex-1 text-center">
         <div className="text-sm text-gray-400">{date}</div>
-        <div className="font-bold my-1 text-white">{match.matchStatus || 'VS'}</div>
+        <div className="font-bold my-1 text-white">VS</div>
         <div className="text-sm text-gray-400">{time}</div>
       </div>
 
