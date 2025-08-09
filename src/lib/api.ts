@@ -104,7 +104,7 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
   }
 };
 
-// ✅ 2025 LCK 전체 시즌 크롤링
+// ✅ LCK 전체 시즌 크롤링
 export const crawlMatches = async (): Promise<string> => {
   try {
     const token = localStorage.getItem('token');
@@ -112,11 +112,9 @@ export const crawlMatches = async (): Promise<string> => {
       throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
 
-    // 현재 연도의 전체 일정을 크롤링
-    const now = new Date();
-    const year = now.getFullYear();
-    const startDate = `${year}-01-01`;
-    const endDate = `${year}-12-31`;
+    // 2025년 전체 크롤링
+    const startDate = '2025-01-01';
+    const endDate = '2025-12-31';
 
     const response = await fetch(`${API_BASE}/api/schedules/crawl?startDate=${startDate}&endDate=${endDate}`, {
       method: 'POST',
