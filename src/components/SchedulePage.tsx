@@ -27,23 +27,28 @@ export default function SchedulePage() {
     }
   }, [router]);
 
-  // LCK 크롤링 실행 함수
+  // LCK 2025 크롤링 실행 함수
   const handleCrawlLCK = async () => {
     try {
       setIsCrawling(true);
       setError(null);
       
-      // LCK 2024 스프링 시즌 크롤링 (1월 16일 ~ 3월 24일)
-      const springResult = await crawlMatches('2024-01-16', '2024-03-24');
+      // LCK 2025 스프링 시즌 크롤링 (1월 ~ 3월)
+      const springResult = await crawlMatches('2025-01-01', '2025-03-31');
       console.log('LCK 스프링 크롤링 결과:', springResult);
       
-      // LCK 2024 서머 시즌 크롤링 (6월 13일 ~ 8월 18일)
-      const summerResult = await crawlMatches('2024-06-13', '2024-08-18');
+      // LCK 2025 서머 시즌 크롤링 (6월 ~ 8월)
+      const summerResult = await crawlMatches('2025-06-01', '2025-08-31');
       console.log('LCK 서머 크롤링 결과:', summerResult);
       
       // 크롤링 후 일정 새로고침
       const data = await fetchMatches();
-      setMatches(data);
+      // CL 리그 제외하고 LCK 일정만 필터링
+      const lckMatches = data.filter(match => 
+        match.leagueName.includes('LCK') && 
+        !match.leagueName.toLowerCase().includes('cl')
+      );
+      setMatches(lckMatches);
     } catch (err) {
       setError('크롤링 중 오류가 발생했습니다.');
       console.error('크롤링 실패:', err);
@@ -58,7 +63,12 @@ export default function SchedulePage() {
         setIsLoading(true);
         setError(null);
         const data = await fetchMatches();
-        setMatches(data);
+        // CL 리그 제외하고 LCK 일정만 필터링
+        const lckMatches = data.filter(match => 
+          match.leagueName.includes('LCK') && 
+          !match.leagueName.toLowerCase().includes('cl')
+        );
+        setMatches(lckMatches);
       } catch (err) {
         setError('경기 일정을 불러오는데 실패했습니다.');
         console.error('Failed to fetch matches:', err);
@@ -108,7 +118,7 @@ export default function SchedulePage() {
               transition: 'all 0.2s'
             }}
           >
-            {isCrawling ? '크롤링 중...' : 'LCK 2024 시즌 일정 가져오기'}
+            {isCrawling ? '크롤링 중...' : 'LCK 2025 시즌 일정 가져오기'}
           </button>
         </div>
 
