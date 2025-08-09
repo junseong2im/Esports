@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
-import { fetchMatches } from '@/lib/api';
+import { fetchMatches, crawlMatches } from '@/lib/api';
 import { MatchSchedule, TeamName } from '@/types';
 import MatchCard from './MatchCard';
 
