@@ -6,18 +6,18 @@ interface Team {
   logo?: string;
 }
 
-export const teams: Team[] = [
+export const teams = [
   { id: 'all', name: '전체' },
-  { id: "T1", name: "T1" },
-  { id: "GEN", name: "Gen.G" },
-  { id: "KT", name: "KT Rolster" },
-  { id: "HLE", name: "Hanwha Life" },
-  { id: "DK", name: "Dplus KIA" },
-  { id: "KDF", name: "Kwangdong Freecs" },
-  { id: "LSB", name: "Liiv SANDBOX" },
-  { id: "NS", name: "NongShim RedForce" },
-  { id: "BRO", name: "OKSavingsBank BRION" },
-  { id: "DRX", name: "DRX" }
+  { id: 'Dplus KIA', name: 'Dplus KIA' },
+  { id: 'Gen.G', name: 'Gen.G' },
+  { id: 'Hanwha Life', name: 'Hanwha Life' },
+  { id: 'KT Rolster', name: 'KT Rolster' },
+  { id: 'Kwangdong Freecs', name: 'Kwangdong Freecs' },
+  { id: 'Nongshim RedForce', name: 'Nongshim RedForce' },
+  { id: 'OK BRION', name: 'OK BRION' },
+  { id: 'T1', name: 'T1' },
+  { id: 'BRION', name: 'BRION' },
+  { id: 'DRX', name: 'DRX' }
 ];
 
 export const matches = [

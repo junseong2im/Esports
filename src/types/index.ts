@@ -1,7 +1,7 @@
 // 백엔드 DTO와 일치하는 타입 정의
-export type TeamName = 'T1' | 'GEN' | 'KT' | 'HLE' | 'DK' | 'KDF' | 'LSB' | 'NS' | 'BRO' | 'DRX';
+export type TeamName = 'T1' | 'Gen.G' | 'KT Rolster' | 'Hanwha Life' | 'Dplus KIA' | 'Kwangdong Freecs' | 'Nongshim RedForce' | 'OK BRION' | 'BRION' | 'DRX';
 
-export const VALID_TEAMS: TeamName[] = ['T1', 'GEN', 'KT', 'HLE', 'DK', 'KDF', 'LSB', 'NS', 'BRO', 'DRX'];
+export const VALID_TEAMS: TeamName[] = ['T1', 'Gen.G', 'KT Rolster', 'Hanwha Life', 'Dplus KIA', 'Kwangdong Freecs', 'Nongshim RedForce', 'OK BRION', 'BRION', 'DRX'];
 
 export interface UserSignupRequest {
   loginId: string;
