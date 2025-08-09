@@ -65,60 +65,73 @@ export default function SchedulePage() {
 
   // 필터링된 경기 목록 (백엔드 필드 기준)
   const filteredMatches = matches
-    .filter(m => selectedTeam === 'all' || m.teamA === selectedTeam || m.teamB === selectedTeam)
+    .filter(m => {
+      if (selectedTeam === 'all') return true;
+      // 팀 이름이 포함되어 있는지 확인 (부분 일치)
+      return m.teamA.includes(selectedTeam) || m.teamB.includes(selectedTeam);
+    })
     .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
-  // 월 목록 생성
-  const months = [...new Set(matches.map(m => m.matchDate.slice(0, 7)))].sort();
-  const [currentMonth, setCurrentMonth] = useState<string>(months[0] || '');
+  // 월 목록 자동 생성 (현재 날짜 기준으로 가장 가까운 월 선택)
+  const months = [...new Set(matches.map(m => {
+    const date = new Date(m.matchDate);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }))].sort();
+
+  // 현재 날짜와 가장 가까운 월 찾기
+  const [currentMonth, setCurrentMonth] = useState<string>('');
 
   useEffect(() => {
-    if (months.length && !currentMonth) setCurrentMonth(months[0]);
-  }, [months, currentMonth]);
+    if (months.length > 0) {
+      const now = new Date();
+      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      // 현재 월이 있으면 그 월을 선택, 없으면 가장 가까운 월 선택
+      const monthIndex = months.indexOf(currentYearMonth);
+      if (monthIndex !== -1) {
+        setCurrentMonth(months[monthIndex]);
+      } else {
+        // 가장 가까운 미래의 월 찾기
+        const futureMonths = months.filter(m => m >= currentYearMonth);
+        if (futureMonths.length > 0) {
+          setCurrentMonth(futureMonths[0]);
+        } else {
+          // 미래 월이 없으면 마지막 월 선택
+          setCurrentMonth(months[months.length - 1]);
+        }
+      }
+    }
+  }, [months]);
 
-  const monthFiltered = filteredMatches.filter(m => m.matchDate.startsWith(currentMonth || ''));
+  // 선택된 월의 경기만 필터링
+  const monthFiltered = filteredMatches.filter(m => {
+    const matchDate = new Date(m.matchDate);
+    const matchYearMonth = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}`;
+    return matchYearMonth === currentMonth;
+  });
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'black', padding: '2rem', position: 'relative' }}>
-      {/* LCK 로고 영역 */}
+      {/* 오른쪽 사이드바 */}
       <div style={{
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '0 auto 2rem auto',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1rem'
+        position: 'fixed',
+        right: '2rem',
+        top: '2rem',
+        width: '300px',
+        backgroundColor: '#1a1a1a',
+        borderRadius: '10px',
+        padding: '1.5rem',
+        color: 'white',
+        zIndex: 100
       }}>
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '1rem'
-        }}>
-          <h1 style={{
-            fontSize: '3.5rem',
-            fontWeight: '900',
-            color: 'white',
-            letterSpacing: '0.1em',
-            textShadow: '0 0 20px rgba(255,255,255,0.3)'
-          }}>
-            LCK
-          </h1>
-          <p style={{
-            color: '#888',
-            fontSize: '1.2rem',
-            marginTop: '0.5rem'
-          }}>
-            League of Legends Champions Korea
-          </p>
-        </div>
-
         {/* 디스코드 연동 버튼 */}
         <button
           onClick={handleDiscordConnect}
           style={{
             backgroundColor: '#7289DA',
             color: 'white',
-            padding: '0.75rem 2rem',
+            padding: '0.75rem',
+            width: '100%',
             borderRadius: '8px',
             border: 'none',
             fontSize: '1rem',
@@ -126,8 +139,10 @@ export default function SchedulePage() {
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.5rem',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            marginBottom: '1.5rem'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -144,191 +159,269 @@ export default function SchedulePage() {
           디스코드 알림 받기
         </button>
 
-        {/* 가이드라인 버튼 */}
-        <button
-          onClick={() => setShowGuide(!showGuide)}
-          style={{
-            backgroundColor: 'transparent',
-            color: '#888',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            padding: '0.5rem',
-            textDecoration: 'underline'
-          }}
-        >
-          {showGuide ? '가이드라인 닫기' : '가이드라인 보기'}
-        </button>
-
-        {/* 가이드라인 내용 */}
-        {showGuide && (
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            padding: '1.5rem',
-            borderRadius: '10px',
+        {/* 가이드라인 섹션 */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h3 style={{ 
+            color: 'white', 
+            fontSize: '1.1rem', 
+            marginBottom: '1rem',
+            borderBottom: '1px solid #333',
+            paddingBottom: '0.5rem'
+          }}>
+            알림 받는 방법
+          </h3>
+          <ol style={{ 
             color: '#888',
             fontSize: '0.9rem',
-            lineHeight: '1.6',
-            maxWidth: '800px',
-            margin: '1rem 0'
+            paddingLeft: '1.2rem',
+            lineHeight: '1.6'
           }}>
-            <h3 style={{ color: 'white', marginBottom: '1rem' }}>LCK 경기 알림 받는 방법</h3>
-            <ol style={{ paddingLeft: '1.5rem' }}>
-              <li>위의 &quot;디스코드 알림 받기&quot; 버튼을 클릭합니다.</li>
-              <li>디스코드 봇을 서버에 초대합니다.</li>
-              <li>원하는 채널에서 !알림설정 명령어를 입력합니다.</li>
-              <li>경기 시작 30분 전에 자동으로 알림을 받을 수 있습니다.</li>
-            </ol>
-            <p style={{ marginTop: '1rem', color: '#666' }}>
-              * 알림을 받고 싶지 않으시다면 !알림해제 명령어를 입력하세요.
-            </p>
-          </div>
-        )}
-
-        <div style={{
-          width: '100%',
-          height: '1px',
-          background: 'linear-gradient(to right, transparent, #333, transparent)',
-          margin: '1rem 0'
-        }} />
-      </div>
-
-      {/* 상단 컨트롤 영역 */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        backgroundColor: 'black',
-        paddingBottom: '1rem',
-        maxWidth: '1400px',
-        margin: '0 auto'
-      }}>
-        {/* 월 선택 */}
-        <div style={{
-          backgroundColor: '#1a1a1a',
-          padding: '1rem',
-          borderRadius: '10px',
-          marginBottom: '1rem'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '1rem',
-            alignItems: 'center'
-          }}>
-            <button
-              onClick={() => {
-                const idx = months.findIndex(m => m === currentMonth);
-                if (idx > 0) setCurrentMonth(months[idx - 1]);
-              }}
-              disabled={!currentMonth || months.findIndex(m => m === currentMonth) === 0}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#333',
-                border: 'none',
-                borderRadius: '5px',
-                color: 'white',
-                cursor: 'pointer',
-                opacity: !currentMonth || months.findIndex(m => m === currentMonth) === 0 ? 0.5 : 1
-              }}
-            >
-              ◀
-            </button>
-            <h2 style={{
-              color: 'white',
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              margin: 0
-            }}>
-              {currentMonth ? `${parseInt(currentMonth.split('-')[1])}월` : '경기 일정'} 경기 일정
-            </h2>
-            <button
-              onClick={() => {
-                const idx = months.findIndex(m => m === currentMonth);
-                if (idx < months.length - 1) setCurrentMonth(months[idx + 1]);
-              }}
-              disabled={!currentMonth || months.findIndex(m => m === currentMonth) === months.length - 1}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#333',
-                border: 'none',
-                borderRadius: '5px',
-                color: 'white',
-                cursor: 'pointer',
-                opacity: !currentMonth || months.findIndex(m => m === currentMonth) === months.length - 1 ? 0.5 : 1
-              }}
-            >
-              ▶
-            </button>
-          </div>
+            <li>디스코드 알림 받기 버튼 클릭</li>
+            <li>디스코드 봇을 서버에 초대</li>
+            <li>채널에서 !알림설정 입력</li>
+            <li>경기 30분 전 자동 알림</li>
+          </ol>
         </div>
 
-        {/* 팀 필터 */}
+        {/* 개인정보 처리 방침 */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h3 style={{ 
+            color: 'white', 
+            fontSize: '1.1rem', 
+            marginBottom: '1rem',
+            borderBottom: '1px solid #333',
+            paddingBottom: '0.5rem'
+          }}>
+            개인정보 처리 방침
+          </h3>
+          <ul style={{ 
+            color: '#888',
+            fontSize: '0.9rem',
+            listStyle: 'none',
+            padding: 0,
+            lineHeight: '1.6'
+          }}>
+            <li style={{ marginBottom: '0.5rem' }}>• 수집하는 개인정보 항목: 디스코드 서버 ID, 채널 ID</li>
+            <li style={{ marginBottom: '0.5rem' }}>• 수집 목적: 경기 알림 서비스 제공</li>
+            <li style={{ marginBottom: '0.5rem' }}>• 보유 기간: 알림 해제 시까지</li>
+            <li>• 제3자 제공: 없음</li>
+          </ul>
+        </div>
+
+        {/* 이용 약관 */}
+        <div>
+          <h3 style={{ 
+            color: 'white', 
+            fontSize: '1.1rem', 
+            marginBottom: '1rem',
+            borderBottom: '1px solid #333',
+            paddingBottom: '0.5rem'
+          }}>
+            이용 약관
+          </h3>
+          <ul style={{ 
+            color: '#888',
+            fontSize: '0.9rem',
+            listStyle: 'none',
+            padding: 0,
+            lineHeight: '1.6'
+          }}>
+            <li style={{ marginBottom: '0.5rem' }}>• 본 서비스는 무료로 제공됩니다</li>
+            <li style={{ marginBottom: '0.5rem' }}>• 알림은 경기 일정에 따라 자동 발송</li>
+            <li style={{ marginBottom: '0.5rem' }}>• 서비스 이용 중 발생하는 문제에 대한 책임은 사용자에게 있습니다</li>
+            <li>• 부적절한 사용 시 서비스 이용이 제한될 수 있습니다</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* 메인 컨텐츠 영역 - 오른쪽 사이드바 공간 확보 */}
+      <div style={{ 
+        maxWidth: 'calc(100% - 350px)', 
+        marginRight: '320px'
+      }}>
+        {/* LCK 로고 영역 */}
         <div style={{
-          backgroundColor: '#1a1a1a',
-          padding: '1.5rem',
-          borderRadius: '10px',
           width: '100%',
-          maxWidth: '1600px',
-          margin: '0 auto',
-          boxSizing: 'border-box'
+          maxWidth: '1200px',
+          margin: '0 auto 2rem auto',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '1rem'
         }}>
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.85rem',
-            justifyContent: 'center',
-            flexWrap: 'nowrap'
+            textAlign: 'center',
+            marginBottom: '1rem'
           }}>
-            {/* 전체 버튼 */}
-            <button
-              onClick={() => setSelectedTeam('all')}
-              style={{
-                padding: '0.75rem 1rem',
-                backgroundColor: selectedTeam === 'all' ? '#4A5568' : '#333',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                width: '100px',
-                textAlign: 'center',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '45px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = selectedTeam === 'all' ? '#4A5568' : '#444';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = selectedTeam === 'all' ? '#4A5568' : '#333';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              전체
-            </button>
-            {/* 팀 버튼들 */}
-            {teams.filter(team => team.id !== 'all').map(team => (
+            <h1 style={{
+              fontSize: '3.5rem',
+              fontWeight: '900',
+              color: 'white',
+              letterSpacing: '0.1em',
+              textShadow: '0 0 20px rgba(255,255,255,0.3)'
+            }}>
+              LCK
+            </h1>
+            <p style={{
+              color: '#888',
+              fontSize: '1.2rem',
+              marginTop: '0.5rem'
+            }}>
+              League of Legends Champions Korea
+            </p>
+          </div>
+
+          {/* 가이드라인 버튼 */}
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#888',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              padding: '0.5rem',
+              textDecoration: 'underline'
+            }}
+          >
+            {showGuide ? '가이드라인 닫기' : '가이드라인 보기'}
+          </button>
+
+          {/* 가이드라인 내용 */}
+          {showGuide && (
+            <div style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              padding: '1.5rem',
+              borderRadius: '10px',
+              color: '#888',
+              fontSize: '0.9rem',
+              lineHeight: '1.6',
+              maxWidth: '800px',
+              margin: '1rem 0'
+            }}>
+              <h3 style={{ color: 'white', marginBottom: '1rem' }}>LCK 경기 알림 받는 방법</h3>
+              <ol style={{ paddingLeft: '1.5rem' }}>
+                <li>위의 &quot;디스코드 알림 받기&quot; 버튼을 클릭합니다.</li>
+                <li>디스코드 봇을 서버에 초대합니다.</li>
+                <li>원하는 채널에서 !알림설정 명령어를 입력합니다.</li>
+                <li>경기 시작 30분 전에 자동으로 알림을 받을 수 있습니다.</li>
+              </ol>
+              <p style={{ marginTop: '1rem', color: '#666' }}>
+                * 알림을 받고 싶지 않으시다면 !알림해제 명령어를 입력하세요.
+              </p>
+            </div>
+          )}
+
+          <div style={{
+            width: '100%',
+            height: '1px',
+            background: 'linear-gradient(to right, transparent, #333, transparent)',
+            margin: '1rem 0'
+          }} />
+        </div>
+
+        {/* 상단 컨트롤 영역 */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          backgroundColor: 'black',
+          paddingBottom: '1rem',
+          maxWidth: '1400px',
+          margin: '0 auto'
+        }}>
+          {/* 월 선택 */}
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            padding: '1rem',
+            borderRadius: '10px',
+            marginBottom: '1rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '1rem',
+              alignItems: 'center'
+            }}>
               <button
-                key={team.id}
-                onClick={() => setSelectedTeam(team.id as TeamName)}
+                onClick={() => {
+                  const idx = months.findIndex(m => m === currentMonth);
+                  if (idx > 0) setCurrentMonth(months[idx - 1]);
+                }}
+                disabled={!currentMonth || months.findIndex(m => m === currentMonth) === 0}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#333',
+                  border: 'none',
+                  borderRadius: '5px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  opacity: !currentMonth || months.findIndex(m => m === currentMonth) === 0 ? 0.5 : 1
+                }}
+              >
+                ◀
+              </button>
+              <h2 style={{
+                color: 'white',
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                margin: 0
+              }}>
+                {currentMonth ? `${parseInt(currentMonth.split('-')[1])}월` : '경기 일정'} 경기 일정
+              </h2>
+              <button
+                onClick={() => {
+                  const idx = months.findIndex(m => m === currentMonth);
+                  if (idx < months.length - 1) setCurrentMonth(months[idx + 1]);
+                }}
+                disabled={!currentMonth || months.findIndex(m => m === currentMonth) === months.length - 1}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#333',
+                  border: 'none',
+                  borderRadius: '5px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  opacity: !currentMonth || months.findIndex(m => m === currentMonth) === months.length - 1 ? 0.5 : 1
+                }}
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+
+          {/* 팀 필터 */}
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            width: '100%',
+            maxWidth: '1600px',
+            margin: '0 auto',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              justifyContent: 'center',
+              flexWrap: 'nowrap'
+            }}>
+              {/* 전체 버튼 */}
+              <button
+                onClick={() => setSelectedTeam('all')}
                 style={{
                   padding: '0.75rem 1rem',
-                  backgroundColor: selectedTeam === team.id ? '#4A5568' : '#333',
+                  backgroundColor: selectedTeam === 'all' ? '#4A5568' : '#333',
                   color: 'white',
                   border: 'none',
                   borderRadius: '5px',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.2s',
-                  fontWeight: 'normal',
-                  fontSize: '0.9rem',
-                  width: '160px',
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  width: '100px',
                   textAlign: 'center',
                   display: 'flex',
                   alignItems: 'center',
@@ -336,60 +429,95 @@ export default function SchedulePage() {
                   height: '45px'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = selectedTeam === team.id ? '#4A5568' : '#444';
+                  e.currentTarget.style.backgroundColor = selectedTeam === 'all' ? '#4A5568' : '#444';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = selectedTeam === team.id ? '#4A5568' : '#333';
+                  e.currentTarget.style.backgroundColor = selectedTeam === 'all' ? '#4A5568' : '#333';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                {team.name}
+                전체
               </button>
-            ))}
+              {/* 팀 버튼들 */}
+              {teams.filter(team => team.id !== 'all').map(team => (
+                <button
+                  key={team.id}
+                  onClick={() => setSelectedTeam(team.id as TeamName)}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    backgroundColor: selectedTeam === team.id ? '#4A5568' : '#333',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s',
+                    fontWeight: 'normal',
+                    fontSize: '0.9rem',
+                    width: '160px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '45px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = selectedTeam === team.id ? '#4A5568' : '#444';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = selectedTeam === team.id ? '#4A5568' : '#333';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {team.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 경기 일정 목록 */}
-      <div style={{
-        maxWidth: '1000px',
-        margin: '2rem auto',
-        padding: '0 1rem'
-      }}>
-        {isLoading ? (
-          <div style={{
-            color: '#888',
-            textAlign: 'center',
-            padding: '2rem'
-          }}>
-            경기 일정을 불러오는 중...
-          </div>
-        ) : error ? (
-          <div style={{
-            color: '#ff4444',
-            textAlign: 'center',
-            padding: '2rem',
-            backgroundColor: 'rgba(255, 68, 68, 0.1)',
-            borderRadius: '10px'
-          }}>
-            {error}
-          </div>
-        ) : monthFiltered.length === 0 ? (
-          <div style={{
-            color: '#888',
-            textAlign: 'center',
-            padding: '2rem',
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '10px'
-          }}>
-            표시할 경기 일정이 없습니다.
-          </div>
-        ) : (
-          monthFiltered.map(m => (
-            <MatchCard key={m.id} match={m} />
-          ))
-        )}
+        {/* 경기 일정 목록 */}
+        <div style={{
+          maxWidth: '1000px',
+          margin: '2rem auto',
+          padding: '0 1rem'
+        }}>
+          {isLoading ? (
+            <div style={{
+              color: '#888',
+              textAlign: 'center',
+              padding: '2rem'
+            }}>
+              경기 일정을 불러오는 중...
+            </div>
+          ) : error ? (
+            <div style={{
+              color: '#ff4444',
+              textAlign: 'center',
+              padding: '2rem',
+              backgroundColor: 'rgba(255, 68, 68, 0.1)',
+              borderRadius: '10px'
+            }}>
+              {error}
+            </div>
+          ) : monthFiltered.length === 0 ? (
+            <div style={{
+              color: '#888',
+              textAlign: 'center',
+              padding: '2rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '10px'
+            }}>
+              표시할 경기 일정이 없습니다.
+            </div>
+          ) : (
+            monthFiltered.map(m => (
+              <MatchCard key={m.id} match={m} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
