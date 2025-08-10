@@ -40,7 +40,7 @@ export default function SchedulePage() {
         setIsLoading(true);
         setError(null);
         
-        // 먼저 2025년 전체 일정 크롤링
+        // 먼저 8월 전체 일정 크롤링
         await crawlMatches();
         
         // 크롤링 완료 후 3초 대기 (백엔드에서 데이터 저장 시간 확보)
@@ -54,9 +54,17 @@ export default function SchedulePage() {
         while (retryCount < maxRetries) {
           try {
             allMatches = await fetchMatches();
-            if (allMatches.length > 0) break;
             
-            console.log(`데이터가 비어있음. 재시도 ${retryCount + 1}/${maxRetries}`);
+            // 8월 데이터가 있는지 확인
+            const hasAugustMatches = allMatches.some(match => {
+              const date = new Date(match.matchDate);
+              const kstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+              return kstDate.getMonth() + 1 === 8;
+            });
+
+            if (hasAugustMatches) break;
+            
+            console.log(`8월 데이터가 없음. 재시도 ${retryCount + 1}/${maxRetries}`);
             await new Promise(resolve => setTimeout(resolve, 2000));
             retryCount++;
           } catch (error) {
@@ -88,13 +96,13 @@ export default function SchedulePage() {
           match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
         );
 
-        // 2025년 경기만 필터링하고 중복 제거
+        // 2025년 8월 경기만 필터링하고 중복 제거
         const uniqueMatches = lckMatches.reduce((acc, match) => {
           const matchDate = new Date(match.matchDate);
           const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
           
-          // 2025년 경기만 선택
-          if (kstDate.getFullYear() !== 2025) return acc;
+          // 2025년 8월 경기만 선택
+          if (kstDate.getFullYear() !== 2025 || kstDate.getMonth() + 1 !== 8) return acc;
 
           // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
           const isDuplicate = acc.some(existing => {
@@ -114,39 +122,14 @@ export default function SchedulePage() {
           return acc;
         }, [] as MatchSchedule[]);
 
-        setMatches(uniqueMatches);
-        
-        // 첫 로드 시 현재 월이나 가장 가까운 월로 이동
-        if (uniqueMatches.length > 0) {
-          const now = new Date();
-          const currentYearMonth = `2025-${String(now.getMonth() + 1).padStart(2, '0')}`;
-          
-          // 현재 월에 경기가 있는지 확인
-          const hasMatchesInCurrentMonth = uniqueMatches.some(m => {
-            const matchDate = new Date(m.matchDate);
-            const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-            const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
-            return matchYearMonth === currentYearMonth;
-          });
+        // 날짜순으로 정렬
+        const sortedMatches = uniqueMatches.sort((a, b) => {
+          const dateA = new Date(a.matchDate);
+          const dateB = new Date(b.matchDate);
+          return dateA.getTime() - dateB.getTime();
+        });
 
-          if (hasMatchesInCurrentMonth) {
-            setCurrentMonth(currentYearMonth);
-          } else {
-            // 가장 가까운 월 찾기
-            const sortedMonths = months.filter(month => {
-              return uniqueMatches.some(m => {
-                const matchDate = new Date(m.matchDate);
-                const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-                const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
-                return matchYearMonth === month;
-              });
-            }).sort();
-
-            if (sortedMonths.length > 0) {
-              setCurrentMonth(sortedMonths[0]);
-            }
-          }
-        }
+        setMatches(sortedMatches);
       } catch (error) {
         setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
         console.error('Failed to fetch matches:', error);
@@ -167,23 +150,103 @@ export default function SchedulePage() {
       setIsLoading(true);
       setError(null);
       setSelectedTeam(team);
+      setCurrentPage(1); // 페이지 초기화
 
-      let filteredMatches;
       if (team === 'all') {
-        // 전체 경기 가져오기
+        // 전체 경기 다시 가져오기
         const allMatches = await fetchMatches();
-        filteredMatches = allMatches.filter(match => 
+        const validMatches = allMatches
+          .filter(match => {
+            const date = new Date(match.matchDate);
+            return !isNaN(date.getTime());
+          })
+          .map(match => ({
+            ...match,
+            matchDate: new Date(match.matchDate).toISOString()
+          }));
+
+        // LCK 리그만 필터링하고 CL 리그는 제외
+        const lckMatches = validMatches.filter(match => 
           match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
         );
+
+        // 2025년 8월 경기만 필터링하고 중복 제거
+        const uniqueMatches = lckMatches.reduce((acc, match) => {
+          const matchDate = new Date(match.matchDate);
+          const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
+          
+          // 2025년 8월 경기만 선택
+          if (kstDate.getFullYear() !== 2025 || kstDate.getMonth() + 1 !== 8) return acc;
+
+          // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
+          const isDuplicate = acc.some(existing => {
+            const existingDate = new Date(existing.matchDate);
+            const existingKstDate = new Date(existingDate.getTime() + (9 * 60 * 60 * 1000));
+            return (
+              existingKstDate.getTime() === kstDate.getTime() &&
+              existing.teamA === match.teamA &&
+              existing.teamB === match.teamB
+            );
+          });
+
+          if (!isDuplicate) {
+            acc.push(match);
+          }
+
+          return acc;
+        }, [] as MatchSchedule[]);
+
+        setMatches(uniqueMatches);
       } else {
         // 선택된 팀의 경기만 가져오기
-        filteredMatches = await fetchTeamMatches(team);
+        const teamMatches = await fetchTeamMatches(team);
+        const validMatches = teamMatches
+          .filter(match => {
+            const date = new Date(match.matchDate);
+            return !isNaN(date.getTime());
+          })
+          .map(match => ({
+            ...match,
+            matchDate: new Date(match.matchDate).toISOString()
+          }));
+
+        // LCK 리그만 필터링하고 CL 리그는 제외
+        const lckMatches = validMatches.filter(match => 
+          match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
+        );
+
+        // 2025년 8월 경기만 필터링하고 중복 제거
+        const uniqueMatches = lckMatches.reduce((acc, match) => {
+          const matchDate = new Date(match.matchDate);
+          const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
+          
+          // 2025년 8월 경기만 선택
+          if (kstDate.getFullYear() !== 2025 || kstDate.getMonth() + 1 !== 8) return acc;
+
+          // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
+          const isDuplicate = acc.some(existing => {
+            const existingDate = new Date(existing.matchDate);
+            const existingKstDate = new Date(existingDate.getTime() + (9 * 60 * 60 * 1000));
+            return (
+              existingKstDate.getTime() === kstDate.getTime() &&
+              existing.teamA === match.teamA &&
+              existing.teamB === match.teamB
+            );
+          });
+
+          if (!isDuplicate) {
+            acc.push(match);
+          }
+
+          return acc;
+        }, [] as MatchSchedule[]);
+
+        setMatches(uniqueMatches);
       }
-      setMatches(filteredMatches);
     } catch (error) {
-      setError('경기 일정을 불러오는데 실패했습니다.');
-      console.error('Failed to fetch matches:', error);
-      showToast('경기 일정을 불러오는데 실패했습니다.', 'error');
+      setError('팀 경기 일정을 불러오는데 실패했습니다.');
+      console.error('Failed to fetch team matches:', error);
+      showToast('팀 경기 일정을 불러오는데 실패했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -213,59 +276,31 @@ export default function SchedulePage() {
     })
     .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
-  // 선택된 월의 경기만 필터링 (KST 기준)
-  const monthFiltered = filteredMatches.filter(m => {
-    const matchDate = new Date(m.matchDate);
-    const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-    const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
-    return matchYearMonth === currentMonth;
-  });
-
-  // 각 월별 경기 수 계산 (KST 기준)
-  const matchesByMonth = months.reduce((acc, month) => {
-    acc[month] = filteredMatches.filter(m => {
-      const matchDate = new Date(m.matchDate);
-      const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-      const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
-      return matchYearMonth === month;
-    }).length;
-    return acc;
-  }, {} as Record<string, number>);
-
   // 페이지네이션 적용
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
-  const currentMatches = monthFiltered.slice(indexOfFirstMatch, indexOfLastMatch);
-  const totalPages = Math.ceil(monthFiltered.length / matchesPerPage);
+  const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
+  const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
+
+  // 날짜 포맷 함수 (KST)
+  const formatMatchDate = (dateString: string) => {
+    const date = new Date(dateString);
+    // UTC 시간을 KST로 변환 (UTC+9)
+    const kstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+    
+    // 월, 일, 시간을 한국어 형식으로 포맷팅
+    const month = kstDate.getMonth() + 1;
+    const day = kstDate.getDate();
+    const hours = kstDate.getHours();
+    const minutes = kstDate.getMinutes().toString().padStart(2, '0');
+    
+    return `${month}월 ${day}일 ${hours}:${minutes}`;
+  };
 
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     window.scrollTo(0, 0);
-  };
-
-  // 날짜 포맷 함수 (KST)
-  const formatMatchDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const kstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
-    return kstDate.toLocaleString('ko-KR', {
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).replace(/\./g, '').replace('시', ':').replace('분', '');
-  };
-
-  // 월 변경 핸들러
-  const handleMonthChange = (direction: 'prev' | 'next') => {
-    const currentIndex = months.indexOf(currentMonth);
-    const newIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    
-    if (newIndex >= 0 && newIndex < months.length) {
-      setCurrentMonth(months[newIndex]);
-      setCurrentPage(1);
-    }
   };
 
   return (
@@ -591,93 +626,6 @@ export default function SchedulePage() {
                 </button>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* 월 선택 */}
-        <div style={{
-          backgroundColor: '#1a1a1a',
-          padding: '1rem',
-          borderRadius: '10px',
-          marginBottom: '1rem'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '1rem',
-            alignItems: 'center',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={() => handleMonthChange('prev')}
-              disabled={months.indexOf(currentMonth) === 0}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#333',
-                border: 'none',
-                borderRadius: '5px',
-                color: 'white',
-                cursor: 'pointer',
-                opacity: months.indexOf(currentMonth) === 0 ? 0.5 : 1
-              }}
-            >
-              ◀
-            </button>
-            <h2 style={{
-              color: 'white',
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              margin: 0
-            }}>
-              {`${parseInt(currentMonth.split('-')[1])}월`} 경기 일정
-              {matchesByMonth[currentMonth] > 0 && ` (${matchesByMonth[currentMonth]}경기)`}
-            </h2>
-            <button
-              onClick={() => handleMonthChange('next')}
-              disabled={months.indexOf(currentMonth) === months.length - 1}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#333',
-                border: 'none',
-                borderRadius: '5px',
-                color: 'white',
-                cursor: 'pointer',
-                opacity: months.indexOf(currentMonth) === months.length - 1 ? 0.5 : 1
-              }}
-            >
-              ▶
-            </button>
-          </div>
-          {/* 월별 빠른 이동 */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            marginTop: '1rem',
-            flexWrap: 'wrap'
-          }}>
-            {months.map(month => (
-              <button
-                key={month}
-                onClick={() => {
-                  setCurrentMonth(month);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: currentMonth === month ? '#4A5568' : '#333',
-                  border: 'none',
-                  borderRadius: '5px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  minWidth: '60px'
-                }}
-              >
-                {parseInt(month.split('-')[1])}월
-                {matchesByMonth[month] > 0 && <span style={{ marginLeft: '0.25rem', fontSize: '0.8rem' }}>({matchesByMonth[month]})</span>}
-              </button>
-            ))}
           </div>
         </div>
 
