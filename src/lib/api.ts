@@ -81,35 +81,28 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
       throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
 
-    console.log('Fetching matches...');
-
     // 8월 경기만 가져오기
     const response = await fetch(`${API_BASE}/api/schedules?from=2025-08-01&to=2025-08-31`, {
       headers: {
-        'Authorization': `Basic ${token}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Basic ${token}`
       }
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to fetch matches:', errorText);
-      throw new Error(errorText || '경기 일정을 불러오는데 실패했습니다.');
+      throw new Error('경기 일정을 불러오는데 실패했습니다.');
     }
 
     const matches = await response.json();
-    console.log('Fetched matches:', matches);
-
-    // LCK CL 제외하고 반환
-    return matches.filter((match: MatchSchedule) => 
-      match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
-    );
+    
+    // 2024년도와 CL 리그 제외
+    return matches.filter((match: MatchSchedule) => {
+      const isNotCL = !match.leagueName?.includes('CL');
+      const is2025 = match.matchDate?.startsWith('2025');
+      return isNotCL && is2025;
+    });
   } catch (error) {
     console.error('Failed to fetch matches:', error);
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error('경기 일정을 불러오는데 실패했습니다.');
+    throw error;
   }
 };
 
