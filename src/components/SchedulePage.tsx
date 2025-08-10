@@ -128,13 +128,51 @@ export default function SchedulePage() {
   // 디버깅용: 필터 단계별 개수 로깅
   useEffect(() => {
     if (!matches) return;
+
+    // 전체 데이터 수 확인
     const total = matches.length;
-    const lckOnly = matches.filter(m => m.leagueName.includes('LCK') && !m.leagueName.includes('CL')).length;
-    const august = matches.filter(m => {
-      const d = new Date((m.matchDate.includes('T') ? m.matchDate : m.matchDate.replace(' ', 'T')));
-      return !isNaN(d.getTime()) && new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit' }).format(d) === '2025-08';
-    }).length;
-    console.log(`[MATCH DEBUG] total=${total}, lckOnly=${lckOnly}, august=${august}`);
+    console.log('\n=== 8월 일정 데이터 검증 시작 ===');
+    console.log(`총 경기 수: ${total}`);
+
+    // LCK 경기만 필터링 (CL 제외)
+    const lckMatches = matches.filter(m => m.leagueName?.includes('LCK') && !m.leagueName?.includes('CL'));
+    console.log(`LCK 경기 수 (CL 제외): ${lckMatches.length}`);
+
+    // 2025년 8월 경기만 필터링
+    const augustMatches = lckMatches.filter(m => {
+      const matchDate = m.matchDate?.split(' ')[0]; // 날짜 부분만 추출
+      return matchDate?.startsWith('2025-08');
+    });
+    console.log(`2025년 8월 LCK 경기 수: ${augustMatches.length}`);
+
+    // 8월 날짜별 경기 수 집계
+    const matchesByDate = new Map<string, number>();
+    augustMatches.forEach(match => {
+      const date = match.matchDate?.split(' ')[0]; // YYYY-MM-DD 형식
+      if (date) {
+        matchesByDate.set(date, (matchesByDate.get(date) || 0) + 1);
+      }
+    });
+
+    // 8월 1일부터 31일까지 날짜별 경기 수 출력
+    console.log('\n=== 8월 날짜별 경기 현황 ===');
+    for (let day = 1; day <= 31; day++) {
+      const date = `2025-08-${day.toString().padStart(2, '0')}`;
+      const count = matchesByDate.get(date) || 0;
+      console.log(`${date}: ${count}경기`);
+    }
+
+    // 데이터가 있는 날짜 수 확인
+    const daysWithMatches = Array.from(matchesByDate.keys()).length;
+    console.log(`\n8월 중 경기가 있는 날: ${daysWithMatches}일`);
+    
+    if (daysWithMatches === 0) {
+      console.warn('⚠️ 경고: 8월 경기 데이터가 없습니다!');
+    } else if (daysWithMatches < 5) {
+      console.warn('⚠️ 경고: 8월 경기 데이터가 너무 적습니다!');
+    }
+
+    console.log('=== 데이터 검증 완료 ===\n');
   }, [matches]);
 
   // 페이지 변경 핸들러
