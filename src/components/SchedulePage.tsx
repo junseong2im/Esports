@@ -124,7 +124,7 @@ export default function SchedulePage() {
   });
 
   // 현재 선택된 월 상태 ('all'은 전체 보기)
-  const [currentMonth, setCurrentMonth] = useState<string | 'all'>('2025-08');
+  const [currentMonth, setCurrentMonth] = useState<string | 'all'>('all');
 
   // 페이지네이션을 위한 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -147,6 +147,16 @@ export default function SchedulePage() {
         return matchYearMonth === currentMonth;
       });
 
+  // 각 월별 경기 수 계산
+  const matchesByMonth = months.reduce((acc, month) => {
+    acc[month] = filteredMatches.filter(m => {
+      const matchDate = new Date(m.matchDate);
+      const matchYearMonth = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}`;
+      return matchYearMonth === month;
+    }).length;
+    return acc;
+  }, {} as Record<string, number>);
+
   // 페이지네이션 적용
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
@@ -157,6 +167,24 @@ export default function SchedulePage() {
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     window.scrollTo(0, 0);
+  };
+
+  // 월 변경 핸들러
+  const handleMonthChange = (direction: 'prev' | 'next') => {
+    if (currentMonth === 'all') return;
+    
+    const currentIndex = months.indexOf(currentMonth);
+    let newIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
+    
+    // 경기가 있는 다음/이전 월 찾기
+    while (newIndex >= 0 && newIndex < months.length) {
+      if (matchesByMonth[months[newIndex]] > 0) {
+        setCurrentMonth(months[newIndex]);
+        setCurrentPage(1);
+        break;
+      }
+      newIndex = direction === 'prev' ? newIndex - 1 : newIndex + 1;
+    }
   };
 
   return (
@@ -394,15 +422,8 @@ export default function SchedulePage() {
               flexWrap: 'wrap'
             }}>
               <button
-                onClick={() => {
-                  if (currentMonth === 'all') return;
-                  const idx = months.findIndex(m => m === currentMonth);
-                  if (idx > 0) {
-                    setCurrentMonth(months[idx - 1]);
-                    setCurrentPage(1);
-                  }
-                }}
-                disabled={currentMonth === 'all' || months.findIndex(m => m === currentMonth) === 0}
+                onClick={() => handleMonthChange('prev')}
+                disabled={currentMonth === 'all' || !months.slice(0, months.indexOf(currentMonth)).some(m => matchesByMonth[m] > 0)}
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: '#333',
@@ -410,7 +431,7 @@ export default function SchedulePage() {
                   borderRadius: '5px',
                   color: 'white',
                   cursor: 'pointer',
-                  opacity: currentMonth === 'all' || months.findIndex(m => m === currentMonth) === 0 ? 0.5 : 1
+                  opacity: currentMonth === 'all' || !months.slice(0, months.indexOf(currentMonth)).some(m => matchesByMonth[m] > 0) ? 0.5 : 1
                 }}
               >
                 ◀
@@ -422,17 +443,11 @@ export default function SchedulePage() {
                 margin: 0
               }}>
                 {currentMonth === 'all' ? '전체' : `${parseInt(currentMonth.split('-')[1])}월`} 경기 일정
+                {currentMonth !== 'all' && matchesByMonth[currentMonth] > 0 && ` (${matchesByMonth[currentMonth]}경기)`}
               </h2>
               <button
-                onClick={() => {
-                  if (currentMonth === 'all') return;
-                  const idx = months.findIndex(m => m === currentMonth);
-                  if (idx < months.length - 1) {
-                    setCurrentMonth(months[idx + 1]);
-                    setCurrentPage(1);
-                  }
-                }}
-                disabled={currentMonth === 'all' || months.findIndex(m => m === currentMonth) === months.length - 1}
+                onClick={() => handleMonthChange('next')}
+                disabled={currentMonth === 'all' || !months.slice(months.indexOf(currentMonth) + 1).some(m => matchesByMonth[m] > 0)}
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: '#333',
@@ -440,14 +455,22 @@ export default function SchedulePage() {
                   borderRadius: '5px',
                   color: 'white',
                   cursor: 'pointer',
-                  opacity: currentMonth === 'all' || months.findIndex(m => m === currentMonth) === months.length - 1 ? 0.5 : 1
+                  opacity: currentMonth === 'all' || !months.slice(months.indexOf(currentMonth) + 1).some(m => matchesByMonth[m] > 0) ? 0.5 : 1
                 }}
               >
                 ▶
               </button>
               <button
                 onClick={() => {
-                  setCurrentMonth(currentMonth === 'all' ? '2025-08' : 'all');
+                  if (currentMonth === 'all') {
+                    // 경기가 있는 첫 번째 월 찾기
+                    const firstMonthWithMatches = months.find(m => matchesByMonth[m] > 0);
+                    if (firstMonthWithMatches) {
+                      setCurrentMonth(firstMonthWithMatches);
+                    }
+                  } else {
+                    setCurrentMonth('all');
+                  }
                   setCurrentPage(1);
                 }}
                 style={{
@@ -463,6 +486,37 @@ export default function SchedulePage() {
                 {currentMonth === 'all' ? '월별 보기' : '전체 보기'}
               </button>
             </div>
+            {/* 월별 경기 수 표시 */}
+            {currentMonth === 'all' && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '1rem',
+                marginTop: '1rem',
+                flexWrap: 'wrap'
+              }}>
+                {months.map(month => matchesByMonth[month] > 0 && (
+                  <button
+                    key={month}
+                    onClick={() => {
+                      setCurrentMonth(month);
+                      setCurrentPage(1);
+                    }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#333',
+                      border: 'none',
+                      borderRadius: '5px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {parseInt(month.split('-')[1])}월 ({matchesByMonth[month]}경기)
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 팀 필터 */}
