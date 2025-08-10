@@ -47,7 +47,7 @@ export default function SchedulePage() {
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         // 크롤링된 데이터 가져오기 (최대 3번 시도)
-        let allMatches = [];
+        let allMatches: MatchSchedule[] = [];
         let retryCount = 0;
         const maxRetries = 3;
 
