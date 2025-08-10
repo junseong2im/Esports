@@ -112,9 +112,9 @@ export const crawlMatches = async (): Promise<string> => {
       throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
 
-    // 2025년 전체 크롤링
+    // 2025년 1월 1일부터 8월 31일까지 크롤링
     const startDate = '2025-01-01';
-    const endDate = '2025-12-31';
+    const endDate = '2025-08-31';
 
     const response = await fetch(`${API_BASE}/api/schedules/crawl?startDate=${startDate}&endDate=${endDate}`, {
       method: 'POST',
