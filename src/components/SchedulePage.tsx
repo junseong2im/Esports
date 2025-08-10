@@ -17,6 +17,8 @@ export default function SchedulePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const matchesPerPage = 30;
 
   // 디스코드 연동 핸들러
   const handleDiscordConnect = () => {
