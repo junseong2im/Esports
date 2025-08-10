@@ -282,20 +282,47 @@ export default function SchedulePage() {
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
-  // 날짜 포맷 함수 (KST)
+  // 날짜 포맷 함수 (KST, Asia/Seoul)
   const formatMatchDate = (dateString: string) => {
-    const date = new Date(dateString);
-    // UTC 시간을 KST로 변환 (UTC+9)
-    const kstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
-    
-    // 월, 일, 시간을 한국어 형식으로 포맷팅
-    const month = kstDate.getMonth() + 1;
-    const day = kstDate.getDate();
-    const hours = kstDate.getHours();
-    const minutes = kstDate.getMinutes().toString().padStart(2, '0');
-    
-    return `${month}월 ${day}일 ${hours}:${minutes}`;
+    try {
+      const normalized = dateString.includes('T') ? dateString : dateString.replace(' ', 'T');
+      const date = new Date(normalized);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateString);
+        return '날짜 정보 없음';
+      }
+      const formatter = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(date);
+      const get = (type: string) => parts.find(p => p.type === type)?.value || '';
+      const month = get('month');
+      const day = get('day');
+      const hour = get('hour');
+      const minute = get('minute');
+      return `${month}월 ${day}일 ${hour}:${minute}`;
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return '날짜 정보 없음';
+    }
   };
+
+  // 디버깅용: 필터 단계별 개수 로깅
+  useEffect(() => {
+    if (!matches) return;
+    const total = matches.length;
+    const lckOnly = matches.filter(m => m.leagueName.includes('LCK') && !m.leagueName.includes('CL')).length;
+    const august = matches.filter(m => {
+      const d = new Date((m.matchDate.includes('T') ? m.matchDate : m.matchDate.replace(' ', 'T')));
+      return !isNaN(d.getTime()) && new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit' }).format(d) === '2025-08';
+    }).length;
+    console.log(`[MATCH DEBUG] total=${total}, lckOnly=${lckOnly}, august=${august}`);
+  }, [matches]);
 
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber: number) => {

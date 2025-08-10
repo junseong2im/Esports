@@ -81,20 +81,26 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
       throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
 
+    console.log('Fetching matches...');
+
     const response = await fetch(`${API_BASE}/api/schedules`, {
       headers: {
-        'Authorization': `Basic ${token}`
+        'Authorization': `Basic ${token}`,
+        'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Server response:', errorText);
+      console.error('Failed to fetch matches:', errorText);
       throw new Error(errorText || '경기 일정을 불러오는데 실패했습니다.');
     }
 
     const matches = await response.json();
-    return matches;
+    console.log('Fetched matches:', matches);
+
+    // 그대로 반환 (날짜는 문자열 그대로 유지)
+    return matches as MatchSchedule[];
   } catch (error) {
     console.error('Failed to fetch matches:', error);
     if (error instanceof Error) {
@@ -112,24 +118,29 @@ export const crawlMatches = async (): Promise<string> => {
       throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
 
-    // 2025년 1월 1일부터 8월 31일까지 크롤링
-    const startDate = '2025-01-01';
+    // 8월 전체 데이터 크롤링 (8월 1일부터 8월 31일까지)
+    const startDate = '2025-08-01';
     const endDate = '2025-08-31';
+
+    console.log('Crawling matches:', { startDate, endDate });
 
     const response = await fetch(`${API_BASE}/api/schedules/crawl?startDate=${startDate}&endDate=${endDate}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${token}`
+        'Authorization': `Basic ${token}`,
+        'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Server response:', errorText);
+      console.error('Crawling failed:', errorText);
       throw new Error(errorText || '크롤링에 실패했습니다.');
     }
 
-    return await response.text();
+    const result = await response.text();
+    console.log('Crawling result:', result);
+    return result;
   } catch (error) {
     console.error('Failed to crawl matches:', error);
     if (error instanceof Error) {
