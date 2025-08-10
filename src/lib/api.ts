@@ -35,16 +35,23 @@ export const login = async (loginId: string, password: string): Promise<string> 
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ loginId, password }),
+      body: JSON.stringify({
+        username: loginId,  // loginId를 username으로 변경
+        password: password
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('Login failed:', errorText);
       throw new Error(errorText || '로그인에 실패했습니다.');
     }
 
-    return await response.text();
+    // 로그인 성공 시 Basic 인증 토큰 생성
+    const token = btoa(`${loginId}:${password}`);
+    return token;
   } catch (error) {
+    console.error('Login error:', error);
     if (error instanceof Error) {
       throw new Error(error.message);
     }
