@@ -42,27 +42,59 @@ export default function SchedulePage() {
         setIsLoading(true);
         setError(null);
         
-        // 먼저 크롤링 실행
-        await crawlMatches();
-        console.log('크롤링 완료');
+        // 크롤링 시도 (최대 3번)
+        let crawlSuccess = false;
+        for (let i = 0; i < 3; i++) {
+          try {
+            await crawlMatches();
+            console.log(`크롤링 시도 ${i + 1} 완료`);
+            crawlSuccess = true;
+            break;
+          } catch (error) {
+            console.error(`크롤링 시도 ${i + 1} 실패:`, error);
+            if (i < 2) {
+              await new Promise(resolve => setTimeout(resolve, 3000)); // 재시도 전 3초 대기
+            }
+          }
+        }
+
+        if (!crawlSuccess) {
+          throw new Error('크롤링에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+
+        // 크롤링 성공 후 5초 대기
+        console.log('크롤링 성공, 5초 대기 후 데이터를 가져옵니다.');
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // 3초 대기 후 데이터 가져오기
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // 데이터 가져오기 시도 (최대 3번)
+        let fetchSuccess = false;
+        let allMatches: MatchSchedule[] = [];
         
-        // 8월 경기 데이터 가져오기
-        const allMatches = await fetchMatches();
-        console.log('가져온 경기 데이터:', allMatches);
-        
-        if (!allMatches || allMatches.length === 0) {
-          console.log('경기 데이터가 없습니다.');
-          setError('경기 일정이 없습니다.');
-          return;
+        for (let i = 0; i < 3; i++) {
+          try {
+            allMatches = await fetchMatches();
+            console.log(`데이터 가져오기 시도 ${i + 1} 결과:`, allMatches);
+            if (allMatches && allMatches.length > 0) {
+              fetchSuccess = true;
+              break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000)); // 재시도 전 3초 대기
+          } catch (error) {
+            console.error(`데이터 가져오기 시도 ${i + 1} 실패:`, error);
+            if (i < 2) {
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+          }
+        }
+
+        if (!fetchSuccess) {
+          throw new Error('경기 일정을 가져오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
 
         setMatches(allMatches);
       } catch (error) {
         console.error('데이터 로딩 에러:', error);
-        setError('경기 일정을 불러오는데 실패했습니다.');
+        setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
       } finally {
         setIsLoading(false);
       }
