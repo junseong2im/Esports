@@ -70,23 +70,38 @@ export default function SchedulePage() {
           throw new Error('경기 일정을 가져오지 못했습니다. 잠시 후 다시 시도해주세요.');
         }
 
+        // 데이터 유효성 검사 및 정규화
+        const validMatches = allMatches
+          .filter(match => {
+            // 유효한 날짜인지 확인
+            const date = new Date(match.matchDate);
+            return !isNaN(date.getTime());
+          })
+          .map(match => ({
+            ...match,
+            // ISO 형식으로 날짜 정규화
+            matchDate: new Date(match.matchDate).toISOString()
+          }));
+
         // LCK 리그만 필터링하고 CL 리그는 제외
-        const lckMatches = allMatches.filter(match => 
+        const lckMatches = validMatches.filter(match => 
           match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
         );
 
         // 2025년 경기만 필터링하고 중복 제거
         const uniqueMatches = lckMatches.reduce((acc, match) => {
           const matchDate = new Date(match.matchDate);
+          const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
           
           // 2025년 경기만 선택
-          if (matchDate.getFullYear() !== 2025) return acc;
+          if (kstDate.getFullYear() !== 2025) return acc;
 
           // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
           const isDuplicate = acc.some(existing => {
             const existingDate = new Date(existing.matchDate);
+            const existingKstDate = new Date(existingDate.getTime() + (9 * 60 * 60 * 1000));
             return (
-              existingDate.getTime() === matchDate.getTime() &&
+              existingKstDate.getTime() === kstDate.getTime() &&
               existing.teamA === match.teamA &&
               existing.teamB === match.teamB
             );
@@ -99,12 +114,39 @@ export default function SchedulePage() {
           return acc;
         }, [] as MatchSchedule[]);
 
-        // 날짜순으로 정렬
-        const sortedMatches = uniqueMatches.sort((a, b) => 
-          new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
-        );
+        setMatches(uniqueMatches);
+        
+        // 첫 로드 시 현재 월이나 가장 가까운 월로 이동
+        if (uniqueMatches.length > 0) {
+          const now = new Date();
+          const currentYearMonth = `2025-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          
+          // 현재 월에 경기가 있는지 확인
+          const hasMatchesInCurrentMonth = uniqueMatches.some(m => {
+            const matchDate = new Date(m.matchDate);
+            const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
+            const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
+            return matchYearMonth === currentYearMonth;
+          });
 
-        setMatches(sortedMatches);
+          if (hasMatchesInCurrentMonth) {
+            setCurrentMonth(currentYearMonth);
+          } else {
+            // 가장 가까운 월 찾기
+            const sortedMonths = months.filter(month => {
+              return uniqueMatches.some(m => {
+                const matchDate = new Date(m.matchDate);
+                const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
+                const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
+                return matchYearMonth === month;
+              });
+            }).sort();
+
+            if (sortedMonths.length > 0) {
+              setCurrentMonth(sortedMonths[0]);
+            }
+          }
+        }
       } catch (error) {
         setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
         console.error('Failed to fetch matches:', error);
@@ -153,8 +195,11 @@ export default function SchedulePage() {
     return `2025-${month}`;
   });
 
+  // 현재 월 계산 (2025년도 기준)
+  const currentMonthStr = `2025-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  
   // 현재 선택된 월 상태
-  const [currentMonth, setCurrentMonth] = useState<string>('2025-01');
+  const [currentMonth, setCurrentMonth] = useState<string>(currentMonthStr);
 
   // 페이지네이션을 위한 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -168,18 +213,20 @@ export default function SchedulePage() {
     })
     .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
-  // 선택된 월의 경기만 필터링
+  // 선택된 월의 경기만 필터링 (KST 기준)
   const monthFiltered = filteredMatches.filter(m => {
     const matchDate = new Date(m.matchDate);
-    const matchYearMonth = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}`;
+    const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
+    const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
     return matchYearMonth === currentMonth;
   });
 
-  // 각 월별 경기 수 계산
+  // 각 월별 경기 수 계산 (KST 기준)
   const matchesByMonth = months.reduce((acc, month) => {
     acc[month] = filteredMatches.filter(m => {
       const matchDate = new Date(m.matchDate);
-      const matchYearMonth = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}`;
+      const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
+      const matchYearMonth = `${kstDate.getFullYear()}-${String(kstDate.getMonth() + 1).padStart(2, '0')}`;
       return matchYearMonth === month;
     }).length;
     return acc;
@@ -195,6 +242,19 @@ export default function SchedulePage() {
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     window.scrollTo(0, 0);
+  };
+
+  // 날짜 포맷 함수 (KST)
+  const formatMatchDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const kstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+    return kstDate.toLocaleString('ko-KR', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(/\./g, '').replace('시', ':').replace('분', '');
   };
 
   // 월 변경 핸들러
@@ -658,7 +718,13 @@ export default function SchedulePage() {
           ) : (
             <>
               {currentMatches.map(m => (
-                <MatchCard key={m.id} match={m} />
+                <MatchCard 
+                  key={`${m.teamA}-${m.teamB}-${m.matchDate}`} 
+                  match={{
+                    ...m,
+                    matchDate: formatMatchDate(m.matchDate)
+                  }} 
+                />
               ))}
               
               {/* 페이지네이션 */}
