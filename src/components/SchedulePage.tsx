@@ -74,7 +74,37 @@ export default function SchedulePage() {
         const lckMatches = allMatches.filter(match => 
           match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
         );
-        setMatches(lckMatches);
+
+        // 2025년 경기만 필터링하고 중복 제거
+        const uniqueMatches = lckMatches.reduce((acc, match) => {
+          const matchDate = new Date(match.matchDate);
+          
+          // 2025년 경기만 선택
+          if (matchDate.getFullYear() !== 2025) return acc;
+
+          // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
+          const isDuplicate = acc.some(existing => {
+            const existingDate = new Date(existing.matchDate);
+            return (
+              existingDate.getTime() === matchDate.getTime() &&
+              existing.teamA === match.teamA &&
+              existing.teamB === match.teamB
+            );
+          });
+
+          if (!isDuplicate) {
+            acc.push(match);
+          }
+
+          return acc;
+        }, [] as MatchSchedule[]);
+
+        // 날짜순으로 정렬
+        const sortedMatches = uniqueMatches.sort((a, b) => 
+          new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
+        );
+
+        setMatches(sortedMatches);
       } catch (error) {
         setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
         console.error('Failed to fetch matches:', error);
