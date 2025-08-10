@@ -46,90 +46,12 @@ export default function SchedulePage() {
         // 크롤링 완료 후 3초 대기 (백엔드에서 데이터 저장 시간 확보)
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // 크롤링된 데이터 가져오기 (최대 3번 시도)
-        let allMatches: MatchSchedule[] = [];
-        let retryCount = 0;
-        const maxRetries = 3;
-
-        while (retryCount < maxRetries) {
-          try {
-            allMatches = await fetchMatches();
-            
-            // 8월 데이터가 있는지 확인
-            const hasAugustMatches = allMatches.some(match => {
-              const date = new Date(match.matchDate);
-              const kstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
-              return kstDate.getMonth() + 1 === 8;
-            });
-
-            if (hasAugustMatches) break;
-            
-            console.log(`8월 데이터가 없음. 재시도 ${retryCount + 1}/${maxRetries}`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            retryCount++;
-          } catch (error) {
-            console.error('데이터 가져오기 실패:', error);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            retryCount++;
-          }
-        }
-
-        if (allMatches.length === 0) {
-          throw new Error('경기 일정을 가져오지 못했습니다. 잠시 후 다시 시도해주세요.');
-        }
-
-        // 데이터 유효성 검사 및 정규화
-        const validMatches = allMatches
-          .filter(match => {
-            // 유효한 날짜인지 확인
-            const date = new Date(match.matchDate);
-            return !isNaN(date.getTime());
-          })
-          .map(match => ({
-            ...match,
-            // ISO 형식으로 날짜 정규화
-            matchDate: new Date(match.matchDate).toISOString()
-          }));
-
-        // LCK 리그만 필터링하고 CL 리그는 제외
-        const lckMatches = validMatches.filter(match => 
-          match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
-        );
-
-        // 2025년 8월 경기만 필터링하고 중복 제거
-        const uniqueMatches = lckMatches.reduce((acc, match) => {
-          const matchDate = new Date(match.matchDate);
-          const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-          
-          // 2025년 8월 경기만 선택
-          if (kstDate.getFullYear() !== 2025 || kstDate.getMonth() + 1 !== 8) return acc;
-
-          // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
-          const isDuplicate = acc.some(existing => {
-            const existingDate = new Date(existing.matchDate);
-            const existingKstDate = new Date(existingDate.getTime() + (9 * 60 * 60 * 1000));
-            return (
-              existingKstDate.getTime() === kstDate.getTime() &&
-              existing.teamA === match.teamA &&
-              existing.teamB === match.teamB
-            );
-          });
-
-          if (!isDuplicate) {
-            acc.push(match);
-          }
-
-          return acc;
-        }, [] as MatchSchedule[]);
-
-        // 날짜순으로 정렬
-        const sortedMatches = uniqueMatches.sort((a, b) => {
-          const dateA = new Date(a.matchDate);
-          const dateB = new Date(b.matchDate);
-          return dateA.getTime() - dateB.getTime();
-        });
-
-        setMatches(sortedMatches);
+        // 크롤링된 데이터 가져오기
+        const allMatches = await fetchMatches();
+        console.log('Fetched matches:', allMatches);
+        
+        // 데이터를 그대로 설정
+        setMatches(allMatches);
       } catch (error) {
         setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
         console.error('Failed to fetch matches:', error);
@@ -150,98 +72,16 @@ export default function SchedulePage() {
       setIsLoading(true);
       setError(null);
       setSelectedTeam(team);
-      setCurrentPage(1); // 페이지 초기화
+      setCurrentPage(1);
 
       if (team === 'all') {
         // 전체 경기 다시 가져오기
         const allMatches = await fetchMatches();
-        const validMatches = allMatches
-          .filter(match => {
-            const date = new Date(match.matchDate);
-            return !isNaN(date.getTime());
-          })
-          .map(match => ({
-            ...match,
-            matchDate: new Date(match.matchDate).toISOString()
-          }));
-
-        // LCK 리그만 필터링하고 CL 리그는 제외
-        const lckMatches = validMatches.filter(match => 
-          match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
-        );
-
-        // 2025년 8월 경기만 필터링하고 중복 제거
-        const uniqueMatches = lckMatches.reduce((acc, match) => {
-          const matchDate = new Date(match.matchDate);
-          const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-          
-          // 2025년 8월 경기만 선택
-          if (kstDate.getFullYear() !== 2025 || kstDate.getMonth() + 1 !== 8) return acc;
-
-          // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
-          const isDuplicate = acc.some(existing => {
-            const existingDate = new Date(existing.matchDate);
-            const existingKstDate = new Date(existingDate.getTime() + (9 * 60 * 60 * 1000));
-            return (
-              existingKstDate.getTime() === kstDate.getTime() &&
-              existing.teamA === match.teamA &&
-              existing.teamB === match.teamB
-            );
-          });
-
-          if (!isDuplicate) {
-            acc.push(match);
-          }
-
-          return acc;
-        }, [] as MatchSchedule[]);
-
-        setMatches(uniqueMatches);
+        setMatches(allMatches);
       } else {
         // 선택된 팀의 경기만 가져오기
         const teamMatches = await fetchTeamMatches(team);
-        const validMatches = teamMatches
-          .filter(match => {
-            const date = new Date(match.matchDate);
-            return !isNaN(date.getTime());
-          })
-          .map(match => ({
-            ...match,
-            matchDate: new Date(match.matchDate).toISOString()
-          }));
-
-        // LCK 리그만 필터링하고 CL 리그는 제외
-        const lckMatches = validMatches.filter(match => 
-          match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
-        );
-
-        // 2025년 8월 경기만 필터링하고 중복 제거
-        const uniqueMatches = lckMatches.reduce((acc, match) => {
-          const matchDate = new Date(match.matchDate);
-          const kstDate = new Date(matchDate.getTime() + (9 * 60 * 60 * 1000));
-          
-          // 2025년 8월 경기만 선택
-          if (kstDate.getFullYear() !== 2025 || kstDate.getMonth() + 1 !== 8) return acc;
-
-          // 같은 시간, 같은 팀 조합의 경기가 이미 있는지 확인
-          const isDuplicate = acc.some(existing => {
-            const existingDate = new Date(existing.matchDate);
-            const existingKstDate = new Date(existingDate.getTime() + (9 * 60 * 60 * 1000));
-            return (
-              existingKstDate.getTime() === kstDate.getTime() &&
-              existing.teamA === match.teamA &&
-              existing.teamB === match.teamB
-            );
-          });
-
-          if (!isDuplicate) {
-            acc.push(match);
-          }
-
-          return acc;
-        }, [] as MatchSchedule[]);
-
-        setMatches(uniqueMatches);
+        setMatches(teamMatches);
       }
     } catch (error) {
       setError('팀 경기 일정을 불러오는데 실패했습니다.');
@@ -282,33 +122,14 @@ export default function SchedulePage() {
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
-  // 날짜 포맷 함수 (KST, Asia/Seoul)
+  // 날짜 포맷 함수 (KST)
   const formatMatchDate = (dateString: string) => {
     try {
-      const normalized = dateString.includes('T') ? dateString : dateString.replace(' ', 'T');
-      const date = new Date(normalized);
-      if (isNaN(date.getTime())) {
-        console.error('Invalid date:', dateString);
-        return '날짜 정보 없음';
-      }
-      const formatter = new Intl.DateTimeFormat('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-      const parts = formatter.formatToParts(date);
-      const get = (type: string) => parts.find(p => p.type === type)?.value || '';
-      const month = get('month');
-      const day = get('day');
-      const hour = get('hour');
-      const minute = get('minute');
-      return `${month}월 ${day}일 ${hour}:${minute}`;
+      // 날짜 문자열을 그대로 반환
+      return dateString;
     } catch (error) {
       console.error('Date formatting error:', error);
-      return '날짜 정보 없음';
+      return dateString;
     }
   };
 
