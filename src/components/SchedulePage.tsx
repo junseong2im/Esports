@@ -111,10 +111,21 @@ export default function SchedulePage() {
   // 필터링된 경기 목록 (백엔드 필드 기준)
   const filteredMatches = matches
     .filter(m => {
-      if (selectedTeam === 'all') return true;
-      return m.teamA.includes(selectedTeam) || m.teamB.includes(selectedTeam);
+      // 팀 필터링
+      if (selectedTeam !== 'all' && !m.teamA.includes(selectedTeam) && !m.teamB.includes(selectedTeam)) {
+        return false;
+      }
+
+      // 2025년 8월 필터링 & LCK CL 제외
+      const [year, month] = m.matchDate.split('-');  // YYYY-MM-DD 형식에서 연도와 월 추출
+      return year === '2025' && month === '08' && m.leagueName.includes('LCK') && !m.leagueName.includes('CL');
     })
-    .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+    .sort((a, b) => {
+      // 날짜 문자열을 비교하여 정렬 (YYYY-MM-DD HH:mm:ss 형식 가정)
+      const dateA = a.matchDate.replace(' ', 'T');  // 공백을 T로 변환하여 Date 객체 생성 가능하게
+      const dateB = b.matchDate.replace(' ', 'T');
+      return new Date(dateA).getTime() - new Date(dateB).getTime();
+    });
 
   // 페이지네이션 적용
   const indexOfLastMatch = currentPage * matchesPerPage;
@@ -122,11 +133,12 @@ export default function SchedulePage() {
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
-  // 날짜 포맷 함수 (KST)
+  // 날짜 포맷 함수 (보기 좋게 표시)
   const formatMatchDate = (dateString: string) => {
     try {
-      // 날짜 문자열을 그대로 반환
-      return dateString;
+      const [datePart, timePart] = dateString.split(' ');
+      const [, , day] = datePart.split('-');  // YYYY-MM-DD에서 일(DD)만 추출
+      return `8월 ${parseInt(day)}일 ${timePart}`;  // "8월 15일 19:00:00" 형식
     } catch (error) {
       console.error('Date formatting error:', error);
       return dateString;
