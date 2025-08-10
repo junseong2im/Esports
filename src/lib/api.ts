@@ -83,7 +83,8 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
 
     console.log('Fetching matches...');
 
-    const response = await fetch(`${API_BASE}/api/schedules`, {
+    // 8월 경기만 가져오기
+    const response = await fetch(`${API_BASE}/api/schedules?from=2025-08-01&to=2025-08-31`, {
       headers: {
         'Authorization': `Basic ${token}`,
         'Content-Type': 'application/json'
@@ -99,8 +100,10 @@ export const fetchMatches = async (): Promise<MatchSchedule[]> => {
     const matches = await response.json();
     console.log('Fetched matches:', matches);
 
-    // 그대로 반환 (날짜는 문자열 그대로 유지)
-    return matches as MatchSchedule[];
+    // LCK CL 제외하고 반환
+    return matches.filter((match: MatchSchedule) => 
+      match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
+    );
   } catch (error) {
     console.error('Failed to fetch matches:', error);
     if (error instanceof Error) {

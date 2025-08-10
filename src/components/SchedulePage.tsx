@@ -108,21 +108,15 @@ export default function SchedulePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const matchesPerPage = 30;
 
-  // 필터링된 경기 목록 (백엔드 필드 기준)
+  // 필터링된 경기 목록 (팀 필터링만)
   const filteredMatches = matches
     .filter(m => {
-      // 팀 필터링
-      if (selectedTeam !== 'all' && !m.teamA.includes(selectedTeam) && !m.teamB.includes(selectedTeam)) {
-        return false;
-      }
-
-      // 2025년 8월 필터링 & LCK CL 제외
-      const [year, month] = m.matchDate.split('-');  // YYYY-MM-DD 형식에서 연도와 월 추출
-      return year === '2025' && month === '08' && m.leagueName.includes('LCK') && !m.leagueName.includes('CL');
+      if (selectedTeam === 'all') return true;
+      return m.teamA.includes(selectedTeam) || m.teamB.includes(selectedTeam);
     })
     .sort((a, b) => {
-      // 날짜 문자열을 비교하여 정렬 (YYYY-MM-DD HH:mm:ss 형식 가정)
-      const dateA = a.matchDate.replace(' ', 'T');  // 공백을 T로 변환하여 Date 객체 생성 가능하게
+      // 날짜순 정렬
+      const dateA = a.matchDate.replace(' ', 'T');
       const dateB = b.matchDate.replace(' ', 'T');
       return new Date(dateA).getTime() - new Date(dateB).getTime();
     });
