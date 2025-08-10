@@ -43,17 +43,42 @@ export default function SchedulePage() {
         // 먼저 2025년 전체 일정 크롤링
         await crawlMatches();
         
-        // 크롤링된 데이터 가져오기
-        const allMatches = await fetchMatches();
+        // 크롤링 완료 후 3초 대기 (백엔드에서 데이터 저장 시간 확보)
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // 크롤링된 데이터 가져오기 (최대 3번 시도)
+        let allMatches = [];
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+          try {
+            allMatches = await fetchMatches();
+            if (allMatches.length > 0) break;
+            
+            console.log(`데이터가 비어있음. 재시도 ${retryCount + 1}/${maxRetries}`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            retryCount++;
+          } catch (error) {
+            console.error('데이터 가져오기 실패:', error);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            retryCount++;
+          }
+        }
+
+        if (allMatches.length === 0) {
+          throw new Error('경기 일정을 가져오지 못했습니다. 잠시 후 다시 시도해주세요.');
+        }
+
         // LCK 리그만 필터링하고 CL 리그는 제외
         const lckMatches = allMatches.filter(match => 
           match.leagueName.includes('LCK') && !match.leagueName.includes('CL')
         );
         setMatches(lckMatches);
       } catch (error) {
-        setError('경기 일정을 불러오는데 실패했습니다.');
+        setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
         console.error('Failed to fetch matches:', error);
-        showToast('경기 일정을 불러오는데 실패했습니다.', 'error');
+        showToast(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.', 'error');
       } finally {
         setIsLoading(false);
       }
@@ -92,52 +117,47 @@ export default function SchedulePage() {
     }
   };
 
+  // 월 목록 자동 생성 (1월부터 12월까지)
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const month = String(i + 1).padStart(2, '0');
+    return `2025-${month}`;
+  });
+
+  // 현재 선택된 월 상태 ('all'은 전체 보기)
+  const [currentMonth, setCurrentMonth] = useState<string | 'all'>('2025-08');
+
+  // 페이지네이션을 위한 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const matchesPerPage = 30;
+
   // 필터링된 경기 목록 (백엔드 필드 기준)
   const filteredMatches = matches
     .filter(m => {
       if (selectedTeam === 'all') return true;
-      // 팀 이름이 포함되어 있는지 확인 (부분 일치)
       return m.teamA.includes(selectedTeam) || m.teamB.includes(selectedTeam);
     })
     .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
-  // 월 목록 자동 생성 (현재 날짜 기준으로 가장 가까운 월 선택)
-  const months = [...new Set(matches.map(m => {
-    const date = new Date(m.matchDate);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  }))].sort();
+  // 월별 또는 전체 필터링
+  const monthFiltered = currentMonth === 'all' 
+    ? filteredMatches 
+    : filteredMatches.filter(m => {
+        const matchDate = new Date(m.matchDate);
+        const matchYearMonth = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}`;
+        return matchYearMonth === currentMonth;
+      });
 
-  // 현재 날짜와 가장 가까운 월 찾기
-  const [currentMonth, setCurrentMonth] = useState<string>('');
+  // 페이지네이션 적용
+  const indexOfLastMatch = currentPage * matchesPerPage;
+  const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
+  const currentMatches = monthFiltered.slice(indexOfFirstMatch, indexOfLastMatch);
+  const totalPages = Math.ceil(monthFiltered.length / matchesPerPage);
 
-  useEffect(() => {
-    if (months.length > 0) {
-      const now = new Date();
-      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      // 현재 월이 있으면 그 월을 선택, 없으면 가장 가까운 월 선택
-      const monthIndex = months.indexOf(currentYearMonth);
-      if (monthIndex !== -1) {
-        setCurrentMonth(months[monthIndex]);
-      } else {
-        // 가장 가까운 미래의 월 찾기
-        const futureMonths = months.filter(m => m >= currentYearMonth);
-        if (futureMonths.length > 0) {
-          setCurrentMonth(futureMonths[0]);
-        } else {
-          // 미래 월이 없으면 마지막 월 선택
-          setCurrentMonth(months[months.length - 1]);
-        }
-      }
-    }
-  }, [months]);
-
-  // 선택된 월의 경기만 필터링
-  const monthFiltered = filteredMatches.filter(m => {
-    const matchDate = new Date(m.matchDate);
-    const matchYearMonth = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}`;
-    return matchYearMonth === currentMonth;
-  });
+  // 페이지 변경 핸들러
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo(0, 0);
+  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'black', padding: '2rem', position: 'relative' }}>
@@ -370,14 +390,19 @@ export default function SchedulePage() {
               display: 'flex',
               justifyContent: 'center',
               gap: '1rem',
-              alignItems: 'center'
+              alignItems: 'center',
+              flexWrap: 'wrap'
             }}>
               <button
                 onClick={() => {
+                  if (currentMonth === 'all') return;
                   const idx = months.findIndex(m => m === currentMonth);
-                  if (idx > 0) setCurrentMonth(months[idx - 1]);
+                  if (idx > 0) {
+                    setCurrentMonth(months[idx - 1]);
+                    setCurrentPage(1);
+                  }
                 }}
-                disabled={!currentMonth || months.findIndex(m => m === currentMonth) === 0}
+                disabled={currentMonth === 'all' || months.findIndex(m => m === currentMonth) === 0}
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: '#333',
@@ -385,7 +410,7 @@ export default function SchedulePage() {
                   borderRadius: '5px',
                   color: 'white',
                   cursor: 'pointer',
-                  opacity: !currentMonth || months.findIndex(m => m === currentMonth) === 0 ? 0.5 : 1
+                  opacity: currentMonth === 'all' || months.findIndex(m => m === currentMonth) === 0 ? 0.5 : 1
                 }}
               >
                 ◀
@@ -396,14 +421,18 @@ export default function SchedulePage() {
                 fontWeight: 'bold',
                 margin: 0
               }}>
-                {currentMonth ? `${parseInt(currentMonth.split('-')[1])}월` : '경기 일정'} 경기 일정
+                {currentMonth === 'all' ? '전체' : `${parseInt(currentMonth.split('-')[1])}월`} 경기 일정
               </h2>
               <button
                 onClick={() => {
+                  if (currentMonth === 'all') return;
                   const idx = months.findIndex(m => m === currentMonth);
-                  if (idx < months.length - 1) setCurrentMonth(months[idx + 1]);
+                  if (idx < months.length - 1) {
+                    setCurrentMonth(months[idx + 1]);
+                    setCurrentPage(1);
+                  }
                 }}
-                disabled={!currentMonth || months.findIndex(m => m === currentMonth) === months.length - 1}
+                disabled={currentMonth === 'all' || months.findIndex(m => m === currentMonth) === months.length - 1}
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: '#333',
@@ -411,10 +440,27 @@ export default function SchedulePage() {
                   borderRadius: '5px',
                   color: 'white',
                   cursor: 'pointer',
-                  opacity: !currentMonth || months.findIndex(m => m === currentMonth) === months.length - 1 ? 0.5 : 1
+                  opacity: currentMonth === 'all' || months.findIndex(m => m === currentMonth) === months.length - 1 ? 0.5 : 1
                 }}
               >
                 ▶
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentMonth(currentMonth === 'all' ? '2025-08' : 'all');
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: currentMonth === 'all' ? '#4A5568' : '#333',
+                  border: 'none',
+                  borderRadius: '5px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  marginLeft: '1rem'
+                }}
+              >
+                {currentMonth === 'all' ? '월별 보기' : '전체 보기'}
               </button>
             </div>
           </div>
@@ -531,7 +577,7 @@ export default function SchedulePage() {
             }}>
               {error}
             </div>
-          ) : monthFiltered.length === 0 ? (
+          ) : currentMatches.length === 0 ? (
             <div style={{
               color: '#888',
               textAlign: 'center',
@@ -542,9 +588,38 @@ export default function SchedulePage() {
               표시할 경기 일정이 없습니다.
             </div>
           ) : (
-            monthFiltered.map(m => (
-              <MatchCard key={m.id} match={m} />
-            ))
+            <>
+              {currentMatches.map(m => (
+                <MatchCard key={m.id} match={m} />
+              ))}
+              
+              {/* 페이지네이션 */}
+              {totalPages > 1 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  marginTop: '2rem'
+                }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                    <button
+                      key={pageNumber}
+                      onClick={() => handlePageChange(pageNumber)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: currentPage === pageNumber ? '#4A5568' : '#333',
+                        border: 'none',
+                        borderRadius: '5px',
+                        color: 'white',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
