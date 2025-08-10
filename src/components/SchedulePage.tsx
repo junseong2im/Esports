@@ -40,104 +40,56 @@ export default function SchedulePage() {
         setIsLoading(true);
         setError(null);
         
-        // 먼저 8월 전체 일정 크롤링
+        // 먼저 크롤링 실행
         await crawlMatches();
+        console.log('크롤링 완료');
         
-        // 크롤링 완료 후 3초 대기 (백엔드에서 데이터 저장 시간 확보)
+        // 3초 대기 후 데이터 가져오기
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // 크롤링된 데이터 가져오기
+        // 8월 경기 데이터 가져오기
         const allMatches = await fetchMatches();
-        console.log('Fetched matches:', allMatches);
+        console.log('가져온 경기 데이터:', allMatches);
         
-        // 데이터를 그대로 설정
+        if (!allMatches || allMatches.length === 0) {
+          console.log('경기 데이터가 없습니다.');
+          setError('경기 일정이 없습니다.');
+          return;
+        }
+
         setMatches(allMatches);
       } catch (error) {
-        setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
-        console.error('Failed to fetch matches:', error);
-        showToast(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.', 'error');
+        console.error('데이터 로딩 에러:', error);
+        setError('경기 일정을 불러오는데 실패했습니다.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (typeof window !== 'undefined') {
-      loadMatches();
-    }
+    loadMatches();
   }, []);
 
-  // 팀 선택 시 해당 팀의 경기만 보여주기
-  const handleTeamSelect = async (team: SelectedTeam) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setSelectedTeam(team);
-      setCurrentPage(1);
-
-      if (team === 'all') {
-        // 전체 경기 다시 가져오기
-        const allMatches = await fetchMatches();
-        setMatches(allMatches);
-      } else {
-        // 선택된 팀의 경기만 가져오기
-        const teamMatches = await fetchTeamMatches(team);
-        setMatches(teamMatches);
-      }
-    } catch (error) {
-      setError('팀 경기 일정을 불러오는데 실패했습니다.');
-      console.error('Failed to fetch team matches:', error);
-      showToast('팀 경기 일정을 불러오는데 실패했습니다.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+  // 팀 선택 핸들러
+  const handleTeamSelect = (team: SelectedTeam) => {
+    setSelectedTeam(team);
+    setCurrentPage(1);  // 팀 변경시 1페이지로 리셋
   };
 
-  // 월 목록 자동 생성 (1월부터 12월까지)
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const month = String(i + 1).padStart(2, '0');
-    return `2025-${month}`;
-  });
-
-  // 현재 월 계산 (2025년도 기준)
-  const currentMonthStr = `2025-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-  
-  // 현재 선택된 월 상태
-  const [currentMonth, setCurrentMonth] = useState<string>(currentMonthStr);
-
-  // 페이지네이션을 위한 상태
-  const [currentPage, setCurrentPage] = useState(1);
-  const matchesPerPage = 30;
-
-  // 필터링된 경기 목록 (팀 필터링만)
+  // 팀 필터링
   const filteredMatches = matches
     .filter(m => {
       if (selectedTeam === 'all') return true;
       return m.teamA.includes(selectedTeam) || m.teamB.includes(selectedTeam);
-    })
-    .sort((a, b) => {
-      // 날짜순 정렬
-      const dateA = a.matchDate.replace(' ', 'T');
-      const dateB = b.matchDate.replace(' ', 'T');
-      return new Date(dateA).getTime() - new Date(dateB).getTime();
     });
 
-  // 페이지네이션 적용
+  // 페이지네이션
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
-  // 날짜 포맷 함수 (보기 좋게 표시)
-  const formatMatchDate = (dateString: string) => {
-    try {
-      const [datePart, timePart] = dateString.split(' ');
-      const [, , day] = datePart.split('-');  // YYYY-MM-DD에서 일(DD)만 추출
-      return `8월 ${parseInt(day)}일 ${timePart}`;  // "8월 15일 19:00:00" 형식
-    } catch (error) {
-      console.error('Date formatting error:', error);
-      return dateString;
-    }
-  };
+  // 날짜는 크롤링된 데이터 그대로 반환
+  const formatMatchDate = (dateString: string) => dateString;
 
   // 디버깅용: 필터 단계별 개수 로깅
   useEffect(() => {
