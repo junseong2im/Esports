@@ -44,8 +44,8 @@ export default function SchedulePage() {
         let crawlSuccess = false;
         for (let i = 0; i < 3; i++) {
           try {
-            await crawlMatches('2025-08-01', '2025-08-31');
-            console.log(`크롤링 시도 ${i + 1} 완료`);
+            const result = await crawlMatches('2025-08-01', '2025-08-31');
+            console.log(`크롤링 시도 ${i + 1} 완료:`, result);
             crawlSuccess = true;
             break;
           } catch (error) {
@@ -60,7 +60,7 @@ export default function SchedulePage() {
           throw new Error('크롤링에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
 
-        // 크롤링 성공 후 5초 대기
+        // 크롤링 성공 후 5초 대기 (DB 저장 시간 고려)
         console.log('크롤링 성공, 5초 대기 후 데이터를 가져옵니다.');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
@@ -75,20 +75,34 @@ export default function SchedulePage() {
             } else {
               allMatches = await fetchTeamMatches(selectedTeam);
             }
-            
-            // 2024년도와 CL 리그 제외
-            allMatches = allMatches.filter(match => {
-              const isNotCL = !match.leagueName?.includes('CL');
-              const is2025 = match.matchDate?.startsWith('2025');
-              return isNotCL && is2025;
-            });
 
-            console.log(`데이터 가져오기 시도 ${i + 1} 결과:`, allMatches);
+            // 데이터가 있는지 확인
             if (allMatches && allMatches.length > 0) {
-              fetchSuccess = true;
-              break;
+              // 2024년도와 CL 리그 제외
+              allMatches = allMatches.filter(match => {
+                const isNotCL = !match.leagueName?.includes('CL');
+                const is2025 = match.matchDate?.startsWith('2025');
+                return isNotCL && is2025;
+              });
+
+              // 날짜순 정렬
+              allMatches.sort((a, b) => {
+                const dateA = new Date(a.matchDate.replace(' ', 'T'));
+                const dateB = new Date(b.matchDate.replace(' ', 'T'));
+                return dateA.getTime() - dateB.getTime();
+              });
+
+              console.log(`데이터 가져오기 시도 ${i + 1} 결과:`, allMatches);
+              
+              if (allMatches.length > 0) {
+                fetchSuccess = true;
+                break;
+              }
             }
-            await new Promise(resolve => setTimeout(resolve, 3000)); // 재시도 전 3초 대기
+
+            // 데이터가 없으면 3초 대기 후 재시도
+            console.log(`데이터가 없어서 재시도 ${i + 1}`);
+            await new Promise(resolve => setTimeout(resolve, 3000));
           } catch (error) {
             console.error(`데이터 가져오기 시도 ${i + 1} 실패:`, error);
             if (i < 2) {

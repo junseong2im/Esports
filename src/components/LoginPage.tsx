@@ -133,9 +133,11 @@ export default function LoginPage() {
           height: '100%',
           overflow: 'hidden',
         }}>
-          <iframe
-            src="https://www.youtube.com/embed/MzS9SlcL33E?autoplay=1&mute=1&controls=0&loop=1&playlist=MzS9SlcL33E&showinfo=0&rel=0&vq=hd1080&hd=1&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1&enablejsapi=0&origin=http://localhost:3000&widget_referrer=http://localhost:3000&cc_load_policy=0&fs=0&modestbranding=1&autohide=1"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
             style={{
               position: 'absolute',
               top: '50%',
@@ -145,14 +147,12 @@ export default function LoginPage() {
               minWidth: '100%',
               minHeight: '100%',
               transform: 'translate(-50%, -50%)',
-              border: 'none',
               objectFit: 'cover',
-              pointerEvents: 'none',
+              filter: 'brightness(0.4)',
             }}
-            loading="eager"
-            title="LCK Background Video"
-            frameBorder="0"
-          />
+          >
+            <source src="/videos/login-bg.mp4" type="video/mp4" />
+          </video>
         </div>
 
         {/* 어두운 오버레이 */}
