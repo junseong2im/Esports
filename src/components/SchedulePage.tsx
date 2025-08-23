@@ -19,9 +19,32 @@ export default function SchedulePage() {
   const matchesPerPage = 30;
 
   // 디스코드 연동 핸들러
-  const handleDiscordConnect = () => {
-    // TODO: 실제 디스코드 연동 로직 구현
-    window.open('https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=0&scope=bot', '_blank');
+  const handleDiscordConnect = async () => {
+    try {
+      // 웹훅 URL 입력 받기
+      const webhookUrl = prompt('디스코드 웹훅 URL을 입력해주세요:');
+      if (!webhookUrl) return;
+
+      // 웹훅 테스트
+      setIsLoading(true);
+      await testDiscordWebhook(webhookUrl);
+
+      // 구독 설정
+      const advanceMin = parseInt(prompt('알림을 받을 시간(분)을 입력해주세요 (기본값: 10):', '10') || '10');
+      const result = await subscribeToTeam(selectedTeam, webhookUrl, advanceMin);
+
+      if (result.ok) {
+        showToast('디스코드 알림 설정이 완료되었습니다!', 'success');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, 'error');
+      } else {
+        showToast('디스코드 연동 중 오류가 발생했습니다.', 'error');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {

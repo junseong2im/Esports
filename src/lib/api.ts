@@ -120,10 +120,6 @@ export const crawlSeason = async (year: number) => {
 
 // 디스코드 알림 관련 API
 export const testDiscordWebhook = async (webhookUrl: string) => {
-  if (!validateWebhookUrl(webhookUrl)) {
-    throw new Error('잘못된 디스코드 Webhook URL 입니다.');
-  }
-
   const response = await fetch(`${API_BASE}/api/alerts/discord/test`, {
     method: 'POST',
     headers: {
@@ -134,21 +130,14 @@ export const testDiscordWebhook = async (webhookUrl: string) => {
   });
 
   if (!response.ok) {
-    throw new Error('디스코드 웹훅 테스트 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '디스코드 웹훅 테스트 실패');
   }
 
   return response.json();
 };
 
 export const subscribeToTeam = async (teamName: string, webhookUrl: string, advanceMin: number = 10) => {
-  if (!validateWebhookUrl(webhookUrl)) {
-    throw new Error('잘못된 디스코드 Webhook URL 입니다.');
-  }
-
-  if (advanceMin < 1) {
-    throw new Error('알림 시간은 최소 1분 이상이어야 합니다.');
-  }
-
   const response = await fetch(`${API_BASE}/api/alerts/discord/subscribe`, {
     method: 'POST',
     headers: {
@@ -159,7 +148,8 @@ export const subscribeToTeam = async (teamName: string, webhookUrl: string, adva
   });
 
   if (!response.ok) {
-    throw new Error('알림 구독 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '알림 구독 실패');
   }
 
   return response.json();
@@ -173,7 +163,8 @@ export const listSubscriptions = async () => {
   });
 
   if (!response.ok) {
-    throw new Error('구독 목록 조회 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '구독 목록 조회 실패');
   }
 
   return response.json();
@@ -188,7 +179,8 @@ export const deactivateSubscription = async (id: number) => {
   });
 
   if (!response.ok) {
-    throw new Error('구독 비활성화 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '구독 비활성화 실패');
   }
 
   return response.json();
@@ -203,7 +195,8 @@ export const deleteSubscription = async (id: number) => {
   });
 
   if (!response.ok) {
-    throw new Error('구독 삭제 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '구독 삭제 실패');
   }
 
   return response.json();
