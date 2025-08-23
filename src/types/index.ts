@@ -1,11 +1,18 @@
 // 경기 일정 관련 타입
 export interface MatchSchedule {
   id: number;
+  externalGameId?: string;
+  gameName: string;
   teamA: string;
   teamB: string;
   matchDate: string;
-  leagueName: string;
+  notified: boolean;
   matchStatus: string;
+  leagueName: string;
+  teamALogo?: string;
+  teamBLogo?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // 사용자 관련 타입
