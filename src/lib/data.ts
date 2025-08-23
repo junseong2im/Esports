@@ -1,12 +1,9 @@
-import { TeamName } from '@/types';
-
 interface Team {
-  id: TeamName | 'all';
+  id: string;
   name: string;
-  logo?: string;
 }
 
-export const teams = [
+export const teams: Team[] = [
   { id: 'all', name: '전체 팀' },
   { id: 'T1', name: 'T1' },
   { id: 'Gen.G', name: 'Gen.G' },
@@ -18,7 +15,7 @@ export const teams = [
   { id: 'DRX', name: 'DRX' },
   { id: 'KDF', name: 'KDF' },
   { id: 'LSB', name: 'LSB' },
-] as const;
+];
 
 export const teamFullNames: Record<string, string> = {
   'T1': 'T1',
