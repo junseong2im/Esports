@@ -12,6 +12,7 @@ export interface MatchSchedule {
 export interface User {
   id: number;
   loginId: string;
+  username: string;
   teamName: string;
 }
 
@@ -26,9 +27,9 @@ export interface UserAlarm {
 
 // API 요청 타입
 export interface UserSignupRequest {
-  loginId: string;
-  password: string;
-  teamName: string;
+  loginId: string;  // 알파벳만 허용
+  password: string; // 영어+숫자 조합, 6자 이상
+  teamName: string; // validTeams에 포함된 값만 허용
 }
 
 export interface UserLoginRequest {
@@ -37,11 +38,29 @@ export interface UserLoginRequest {
 }
 
 export interface DiscordWebhookRequest {
-  webhookUrl: string;
+  webhookUrl: string; // https://discord.com/api/webhooks/로 시작
 }
 
 export interface SubscribeRequest {
-  teamName: string;
-  webhookUrl: string;
-  advanceMin: number;
-} 
+  teamName: string;   // "ALL" 또는 팀명
+  webhookUrl: string; // Discord Webhook URL
+  advanceMin: number; // 기본값 10, 최소 1
+}
+
+// 유효성 검사 함수
+export const validateLoginId = (loginId: string): boolean => {
+  return /^[a-zA-Z]+$/.test(loginId);
+};
+
+export const validatePassword = (password: string): boolean => {
+  return /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(password);
+};
+
+export const validateWebhookUrl = (url: string): boolean => {
+  return /^https:\/\/discord\.com\/api\/webhooks\/.+/.test(url);
+};
+
+export const validateTeamName = (teamName: string): boolean => {
+  const validTeams = ['T1', 'Gen.G', 'DK', 'HLE', 'KT', 'NS', 'BRO', 'DRX', 'KDF', 'LSB'];
+  return validTeams.includes(teamName);
+}; 

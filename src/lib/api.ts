@@ -1,9 +1,21 @@
-import { MatchSchedule } from '@/types';
+import { MatchSchedule, validateLoginId, validatePassword, validateTeamName, validateWebhookUrl } from '@/types';
+import { showToast } from './toast';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://esportscalender-nzpn.onrender.com';
 
 // 사용자 관련 API
 export const signup = async (loginId: string, password: string, teamName: string) => {
+  // 프론트엔드 유효성 검사
+  if (!validateLoginId(loginId)) {
+    throw new Error('ID는 영어 알파벳만 사용할 수 있습니다.');
+  }
+  if (!validatePassword(password)) {
+    throw new Error('비밀번호는 영어+숫자 조합으로 6자 이상이어야 합니다.');
+  }
+  if (!validateTeamName(teamName)) {
+    throw new Error('존재하지 않는 팀입니다.');
+  }
+
   const response = await fetch(`${API_BASE}/api/users/signup`, {
     method: 'POST',
     headers: {
@@ -13,7 +25,8 @@ export const signup = async (loginId: string, password: string, teamName: string
   });
 
   if (!response.ok) {
-    throw new Error('회원가입 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '회원가입 실패');
   }
 
   return response.text();
@@ -29,7 +42,8 @@ export const login = async (loginId: string, password: string) => {
   });
 
   if (!response.ok) {
-    throw new Error('로그인 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '로그인 실패');
   }
 
   return response.text();
@@ -81,7 +95,24 @@ export const crawlMatches = async (startDate?: string, endDate?: string) => {
   });
 
   if (!response.ok) {
-    throw new Error('경기 일정 크롤링 실패');
+    const errorText = await response.text();
+    throw new Error(errorText || '경기 일정 크롤링 실패');
+  }
+
+  return response.text();
+};
+
+export const crawlSeason = async (year: number) => {
+  const response = await fetch(`${API_BASE}/api/schedules/crawl/season?year=${year}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${localStorage.getItem('token')}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || '시즌 크롤링 실패');
   }
 
   return response.text();
@@ -89,6 +120,10 @@ export const crawlMatches = async (startDate?: string, endDate?: string) => {
 
 // 디스코드 알림 관련 API
 export const testDiscordWebhook = async (webhookUrl: string) => {
+  if (!validateWebhookUrl(webhookUrl)) {
+    throw new Error('잘못된 디스코드 Webhook URL 입니다.');
+  }
+
   const response = await fetch(`${API_BASE}/api/alerts/discord/test`, {
     method: 'POST',
     headers: {
@@ -106,6 +141,14 @@ export const testDiscordWebhook = async (webhookUrl: string) => {
 };
 
 export const subscribeToTeam = async (teamName: string, webhookUrl: string, advanceMin: number = 10) => {
+  if (!validateWebhookUrl(webhookUrl)) {
+    throw new Error('잘못된 디스코드 Webhook URL 입니다.');
+  }
+
+  if (advanceMin < 1) {
+    throw new Error('알림 시간은 최소 1분 이상이어야 합니다.');
+  }
+
   const response = await fetch(`${API_BASE}/api/alerts/discord/subscribe`, {
     method: 'POST',
     headers: {
