@@ -26,10 +26,13 @@ export interface User {
 // 알림 구독 관련 타입
 export interface UserAlarm {
   id: number;
-  teamName: string;
-  webhookUrl: string;
-  advanceMin: number;
-  active: boolean;
+  user?: User;  // optional: 로그인 안 쓰면 null 허용
+  teamName: string;  // "T1", "Gen.G" 등
+  webhookUrl: string;  // 디스코드 Webhook URL
+  advanceMin: number;  // 몇 분 전 알림 (기본 10분)
+  active: boolean;  // 구독 활성 여부
+  createdAt: string;  // ISO 8601 형식
+  updatedAt: string;  // ISO 8601 형식
 }
 
 // API 요청 타입
@@ -44,14 +47,15 @@ export interface UserLoginRequest {
   password: string;
 }
 
+// 디스코드 웹훅 관련 타입
 export interface DiscordWebhookRequest {
-  webhookUrl: string; // https://discord.com/api/webhooks/로 시작
+  webhookUrl: string;  // ^https://discord\.com/api/webhooks/.+
 }
 
 export interface SubscribeRequest {
-  teamName: string;   // "ALL" 또는 팀명
-  webhookUrl: string; // Discord Webhook URL
-  advanceMin: number; // 기본값 10, 최소 1
+  teamName: string;    // "ALL" 또는 팀명 (예: "T1")
+  webhookUrl: string;  // 디스코드 Webhook URL
+  advanceMin: number;  // 기본값 10, 최소 1
 }
 
 // 유효성 검사 함수

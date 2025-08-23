@@ -22,13 +22,25 @@ export default function SchedulePage() {
   const handleDiscordConnect = async () => {
     try {
       // 웹훅 URL 입력 받기
-      const webhookUrl = prompt('디스코드 웹훅 URL을 입력해주세요:');
+      const webhookUrl = prompt('디스코드 웹훅 URL을 입력해주세요:\n(https://discord.com/api/webhooks/로 시작해야 합니다)');
       if (!webhookUrl) return;
+
+      // 웹훅 URL 유효성 검사
+      if (!validateWebhookUrl(webhookUrl)) {
+        showToast('잘못된 디스코드 Webhook URL 입니다.', 'error');
+        return;
+      }
 
       // 웹훅 테스트
       setIsLoading(true);
       await testDiscordWebhook(webhookUrl);
+      showToast('웹훅 연결 테스트 성공!', 'success');
 
+      // 알림 시간 설정
+      const advanceMinStr = prompt('알림을 받을 시간(분)을 입력해주세요:', '10');
+      if (!advanceMinStr) return;
+      
+      const advanceMin = parseInt(advanceMinStr);
       // 구독 설정
       const advanceMin = parseInt(prompt('알림을 받을 시간(분)을 입력해주세요 (기본값: 10):', '10') || '10');
       const result = await subscribeToTeam(selectedTeam, webhookUrl, advanceMin);
