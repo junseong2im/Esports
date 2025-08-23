@@ -41,12 +41,17 @@ export default function SchedulePage() {
       if (!advanceMinStr) return;
       
       const advanceMin = parseInt(advanceMinStr);
+      if (isNaN(advanceMin) || advanceMin < 1) {
+        showToast('알림 시간은 1분 이상이어야 합니다.', 'error');
+        return;
+      }
+
       // 구독 설정
-      const advanceMin = parseInt(prompt('알림을 받을 시간(분)을 입력해주세요 (기본값: 10):', '10') || '10');
-      const result = await subscribeToTeam(selectedTeam, webhookUrl, advanceMin);
+      const teamName = selectedTeam === 'all' ? 'ALL' : selectedTeam;
+      const result = await subscribeToTeam(teamName, webhookUrl, advanceMin);
 
       if (result.ok) {
-        showToast('디스코드 알림 설정이 완료되었습니다!', 'success');
+        showToast(`${teamName === 'ALL' ? '전체 팀' : teamName} 경기 알림 설정이 완료되었습니다!`, 'success');
       }
     } catch (error) {
       if (error instanceof Error) {
