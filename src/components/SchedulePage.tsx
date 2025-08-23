@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
 import { fetchMatches, crawlMatches, fetchTeamMatches } from '@/lib/api';
@@ -11,7 +11,7 @@ import MatchCard from './MatchCard';
 export default function SchedulePage() {
   const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
-  const [matches, setMatches] = useState<MatchSchedule[]>([]);
+  const [allMatches, setAllMatches] = useState<MatchSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -66,42 +66,33 @@ export default function SchedulePage() {
         
         // 데이터 가져오기 시도 (최대 3번)
         let fetchSuccess = false;
-        let allMatches: MatchSchedule[] = [];
+        let matches: MatchSchedule[] = [];
         
         for (let i = 0; i < 3; i++) {
           try {
-            if (selectedTeam === 'all') {
-              allMatches = await fetchMatches('2025-08-01', '2025-08-31');
-            } else {
-              allMatches = await fetchTeamMatches(selectedTeam);
+            matches = await fetchMatches('2025-08-01', '2025-08-31');
+
+            // 2024년도와 CL 리그 제외
+            matches = matches.filter(match => {
+              const isNotCL = !match.leagueName?.includes('CL');
+              const is2025 = match.matchDate?.startsWith('2025');
+              return isNotCL && is2025;
+            });
+
+            // 날짜순 정렬
+            matches.sort((a, b) => {
+              const dateA = new Date(a.matchDate.replace(' ', 'T'));
+              const dateB = new Date(b.matchDate.replace(' ', 'T'));
+              return dateA.getTime() - dateB.getTime();
+            });
+
+            console.log(`데이터 가져오기 시도 ${i + 1} 결과:`, matches);
+            
+            if (matches.length > 0) {
+              fetchSuccess = true;
+              break;
             }
 
-            // 데이터가 있는지 확인
-            if (allMatches && allMatches.length > 0) {
-              // 2024년도와 CL 리그 제외
-              allMatches = allMatches.filter(match => {
-                const isNotCL = !match.leagueName?.includes('CL');
-                const is2025 = match.matchDate?.startsWith('2025');
-                return isNotCL && is2025;
-              });
-
-              // 날짜순 정렬
-              allMatches.sort((a, b) => {
-                const dateA = new Date(a.matchDate.replace(' ', 'T'));
-                const dateB = new Date(b.matchDate.replace(' ', 'T'));
-                return dateA.getTime() - dateB.getTime();
-              });
-
-              console.log(`데이터 가져오기 시도 ${i + 1} 결과:`, allMatches);
-              
-              if (allMatches.length > 0) {
-                fetchSuccess = true;
-                break;
-              }
-            }
-
-            // 데이터가 없으면 3초 대기 후 재시도
-            console.log(`데이터가 없어서 재시도 ${i + 1}`);
             await new Promise(resolve => setTimeout(resolve, 3000));
           } catch (error) {
             console.error(`데이터 가져오기 시도 ${i + 1} 실패:`, error);
@@ -115,7 +106,7 @@ export default function SchedulePage() {
           throw new Error('경기 일정을 가져오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
 
-        setMatches(allMatches);
+        setAllMatches(matches);
       } catch (error) {
         console.error('데이터 로딩 에러:', error);
         setError(error instanceof Error ? error.message : '경기 일정을 불러오는데 실패했습니다.');
@@ -125,7 +116,17 @@ export default function SchedulePage() {
     };
 
     loadMatches();
-  }, [selectedTeam]);
+  }, []);
+
+  // 팀별 필터링된 매치 목록
+  const filteredMatches = useMemo(() => {
+    if (selectedTeam === 'all') {
+      return allMatches;
+    }
+    return allMatches.filter(match => 
+      match.teamA === selectedTeam || match.teamB === selectedTeam
+    );
+  }, [selectedTeam, allMatches]);
 
   // 팀 선택 핸들러
   const handleTeamSelect = (team: string) => {
@@ -136,23 +137,23 @@ export default function SchedulePage() {
   // 페이지네이션
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
-  const currentMatches = matches.slice(indexOfFirstMatch, indexOfLastMatch);
-  const totalPages = Math.ceil(matches.length / matchesPerPage);
+  const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
+  const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
   // 날짜는 크롤링된 데이터 그대로 반환
   const formatMatchDate = (dateString: string) => dateString;
 
   // 디버깅용: 필터 단계별 개수 로깅
   useEffect(() => {
-    if (!matches) return;
+    if (!allMatches) return;
 
     // 전체 데이터 수 확인
-    const total = matches.length;
+    const total = allMatches.length;
     console.log('\n=== 8월 일정 데이터 검증 시작 ===');
     console.log(`총 경기 수: ${total}`);
 
     // LCK 경기만 필터링 (CL 제외)
-    const lckMatches = matches.filter(m => m.leagueName?.includes('LCK') && !m.leagueName?.includes('CL'));
+    const lckMatches = allMatches.filter(m => m.leagueName?.includes('LCK') && !m.leagueName?.includes('CL'));
     console.log(`LCK 경기 수 (CL 제외): ${lckMatches.length}`);
 
     // 2025년 8월 경기만 필터링
@@ -190,7 +191,7 @@ export default function SchedulePage() {
     }
 
     console.log('=== 데이터 검증 완료 ===\n');
-  }, [matches]);
+  }, [allMatches]);
 
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber: number) => {
@@ -432,7 +433,7 @@ export default function SchedulePage() {
               fontWeight: 'bold',
               margin: 0
             }}>
-              전체 경기 일정 ({matches.length}경기)
+              전체 경기 일정 ({allMatches.length}경기)
             </h2>
           </div>
 
