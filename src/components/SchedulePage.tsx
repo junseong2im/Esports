@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { teams } from '@/lib/data';
-import { fetchMatches, crawlMatches, fetchTeamMatches } from '@/lib/api';
-import { MatchSchedule } from '@/types';
+import { fetchMatches, crawlMatches, testDiscordWebhook, subscribeToTeam } from '@/lib/api';
+import { MatchSchedule, validateWebhookUrl } from '@/types';
 import { showToast } from '@/lib/toast';
 import MatchCard from './MatchCard';
 
