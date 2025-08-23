@@ -12,70 +12,24 @@ export default function SchedulePage() {
   const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [allMatches, setAllMatches] = useState<MatchSchedule[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);  // 초기값을 false로 변경
   const [error, setError] = useState<string | null>(null);
-  const [showGuide, setShowGuide] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const matchesPerPage = 30;
 
-  // 디스코드 연동 핸들러
-  const handleDiscordConnect = async () => {
-    try {
-      // 웹훅 URL 입력 받기
-      const webhookUrl = prompt('디스코드 웹훅 URL을 입력해주세요:\n(https://discord.com/api/webhooks/로 시작해야 합니다)');
-      if (!webhookUrl) return;
-
-      // 웹훅 URL 유효성 검사
-      if (!validateWebhookUrl(webhookUrl)) {
-        showToast('잘못된 디스코드 Webhook URL 입니다.', 'error');
-        return;
-      }
-
-      // 웹훅 테스트
-      setIsLoading(true);
-      await testDiscordWebhook(webhookUrl);
-      showToast('웹훅 연결 테스트 성공!', 'success');
-
-      // 알림 시간 설정
-      const advanceMinStr = prompt('알림을 받을 시간(분)을 입력해주세요:', '10');
-      if (!advanceMinStr) return;
-      
-      const advanceMin = parseInt(advanceMinStr);
-      if (isNaN(advanceMin) || advanceMin < 1) {
-        showToast('알림 시간은 1분 이상이어야 합니다.', 'error');
-        return;
-      }
-
-      // 구독 설정
-      const teamName = selectedTeam === 'all' ? 'ALL' : selectedTeam;
-      const result = await subscribeToTeam(teamName, webhookUrl, advanceMin);
-
-      if (result.ok) {
-        showToast(`${teamName === 'ALL' ? '전체 팀' : teamName} 경기 알림 설정이 완료되었습니다!`, 'success');
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        showToast(error.message, 'error');
-      } else {
-        showToast('디스코드 연동 중 오류가 발생했습니다.', 'error');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // 인증 체크
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.replace('/');
-        return;
-      }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.replace('/');
     }
   }, [router]);
 
+  // 데이터 로딩
   useEffect(() => {
     const loadMatches = async () => {
+      if (!localStorage.getItem('token')) return;  // 토큰 없으면 로딩 안 함
+      
       try {
         setIsLoading(true);
         setError(null);
@@ -91,7 +45,7 @@ export default function SchedulePage() {
           } catch (error) {
             console.error(`크롤링 시도 ${i + 1} 실패:`, error);
             if (i < 2) {
-              await new Promise(resolve => setTimeout(resolve, 3000)); // 재시도 전 3초 대기
+              await new Promise(resolve => setTimeout(resolve, 3000));
             }
           }
         }
@@ -100,7 +54,7 @@ export default function SchedulePage() {
           throw new Error('크롤링에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
 
-        // 크롤링 성공 후 5초 대기 (DB 저장 시간 고려)
+        // 크롤링 성공 후 5초 대기
         console.log('크롤링 성공, 5초 대기 후 데이터를 가져옵니다.');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
@@ -179,6 +133,52 @@ export default function SchedulePage() {
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
+
+  // 디스코드 연동 핸들러
+  const handleDiscordConnect = async () => {
+    try {
+      // 웹훅 URL 입력 받기
+      const webhookUrl = prompt('디스코드 웹훅 URL을 입력해주세요:\n(https://discord.com/api/webhooks/로 시작해야 합니다)');
+      if (!webhookUrl) return;
+
+      // 웹훅 URL 유효성 검사
+      if (!validateWebhookUrl(webhookUrl)) {
+        showToast('잘못된 디스코드 Webhook URL 입니다.', 'error');
+        return;
+      }
+
+      // 웹훅 테스트
+      setIsLoading(true);
+      await testDiscordWebhook(webhookUrl);
+      showToast('웹훅 연결 테스트 성공!', 'success');
+
+      // 알림 시간 설정
+      const advanceMinStr = prompt('알림을 받을 시간(분)을 입력해주세요:', '10');
+      if (!advanceMinStr) return;
+      
+      const advanceMin = parseInt(advanceMinStr);
+      if (isNaN(advanceMin) || advanceMin < 1) {
+        showToast('알림 시간은 1분 이상이어야 합니다.', 'error');
+        return;
+      }
+
+      // 구독 설정
+      const teamName = selectedTeam === 'all' ? 'ALL' : selectedTeam;
+      const result = await subscribeToTeam(teamName, webhookUrl, advanceMin);
+
+      if (result.ok) {
+        showToast(`${teamName === 'ALL' ? '전체 팀' : teamName} 경기 알림 설정이 완료되었습니다!`, 'success');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, 'error');
+      } else {
+        showToast('디스코드 연동 중 오류가 발생했습니다.', 'error');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 날짜는 크롤링된 데이터 그대로 반환
   const formatMatchDate = (dateString: string) => dateString;
