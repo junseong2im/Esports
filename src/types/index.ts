@@ -1,12 +1,34 @@
-// 백엔드 DTO와 일치하는 타입 정의
-export type TeamName = 'T1' | 'Gen.G' | 'KT Rolster' | 'Dplus KIA' | 'Hanwha Life' | 'OK BRION' | 'DRX' | 'Nongshim RedForce' | 'Kwangdong Freecs';
+// 경기 일정 관련 타입
+export interface MatchSchedule {
+  id: number;
+  teamA: string;
+  teamB: string;
+  matchDate: string;
+  leagueName: string;
+  matchStatus: string;
+}
 
-export const VALID_TEAMS: TeamName[] = ['T1', 'Gen.G', 'KT Rolster', 'Dplus KIA', 'Hanwha Life', 'OK BRION', 'DRX', 'Nongshim RedForce', 'Kwangdong Freecs'];
+// 사용자 관련 타입
+export interface User {
+  id: number;
+  loginId: string;
+  teamName: string;
+}
 
+// 알림 구독 관련 타입
+export interface UserAlarm {
+  id: number;
+  teamName: string;
+  webhookUrl: string;
+  advanceMin: number;
+  active: boolean;
+}
+
+// API 요청 타입
 export interface UserSignupRequest {
   loginId: string;
   password: string;
-  teamName: TeamName;
+  teamName: string;
 }
 
 export interface UserLoginRequest {
@@ -14,13 +36,12 @@ export interface UserLoginRequest {
   password: string;
 }
 
-// 백엔드 도메인에 맞춘 경기 일정 타입
-export interface MatchSchedule {
-  id: number;
-  gameName: string;      // 예: "LOL"
-  teamA: string;
-  teamB: string;
-  matchDate: string;     // ISO 또는 yyyy-MM-dd HH:mm[:ss]
-  leagueName: string;    // 토너먼트/리그명
-  matchStatus: string;   // 상태 또는 승자 정보
+export interface DiscordWebhookRequest {
+  webhookUrl: string;
+}
+
+export interface SubscribeRequest {
+  teamName: string;
+  webhookUrl: string;
+  advanceMin: number;
 } 
